@@ -4,7 +4,8 @@
   "scripts": {
     "ci": "npm install && npm run format && npm run lint && npm run build",
     "dev": "vite dev --host 0.0.0.0",
-    "build": "vite build",
+    "build": "npm run codegen && vite build",
+    "codegen": "vdl generate ./schema/vdl.config.vdl",
     "format": "npm run format:vdl && npm run format:dprint && npm run format:biome",
     "format:vdl": "vdl format",
     "format:dprint": "dprint fmt --config ./dprint.json --log-level warn",
