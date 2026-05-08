@@ -115,7 +115,10 @@ export const DatabaseQuery = {
       return `${fieldPath0_1}: required field is missing`;
     }
     {
-      const error = DatabaseQueryOutput.validate(record0["output"], fieldPath0_1);
+      const error = DatabaseQueryOutput.validate(
+        record0["output"],
+        fieldPath0_1,
+      );
       if (error !== null) {
         return error;
       }
@@ -239,7 +242,10 @@ export const DatabaseQueryOutput = {
     if (!_vdl.hasOwn(record0, "time") || record0["time"] === undefined) {
       return `${fieldPath0_0}: required field is missing`;
     }
-    if (typeof record0["time"] !== "number" || !Number.isFinite(record0["time"])) {
+    if (
+      typeof record0["time"] !== "number" ||
+      !Number.isFinite(record0["time"])
+    ) {
       return `${fieldPath0_0}: expected number, got ${_vdl.describeValue(record0["time"])}`;
     }
     const fieldPath0_1 = `${path}.results`;
@@ -252,7 +258,10 @@ export const DatabaseQueryOutput = {
     for (let index1 = 0; index1 < record0["results"].length; index1 += 1) {
       const itemPath1 = `${fieldPath0_1}[${index1}]`;
       {
-        const error = QueryResult.validate(record0["results"][index1], itemPath1);
+        const error = QueryResult.validate(
+          record0["results"][index1],
+          itemPath1,
+        );
         if (error !== null) {
           return error;
         }
@@ -273,9 +282,7 @@ export const DatabaseQueryOutput = {
 } as const;
 
 /**
- * Represents one SQL query execution request.
- *
- * - txId is used to execute the query inside an existing transaction.
+ * Query represents a generated VDL object.
  */
 export type Query = {
   /**
@@ -337,7 +344,10 @@ export const Query = {
       for (let index1 = 0; index1 < record0["params"].length; index1 += 1) {
         const itemPath1 = `${fieldPath0_2}[${index1}]`;
         {
-          const error = QueryParam.validate(record0["params"][index1], itemPath1);
+          const error = QueryParam.validate(
+            record0["params"][index1],
+            itemPath1,
+          );
           if (error !== null) {
             return error;
           }
@@ -351,17 +361,24 @@ export const Query = {
    * Hydrates a validated Query value into its runtime representation.
    */
   hydrate(input: Query): Query {
-    return _vdl.withOptional(_vdl.withOptional({
-      query: input.query,
-    }, "txId", input.txId === undefined ? undefined : input.txId), "params", input.params === undefined ? undefined : input.params.map((item1) => QueryParam.hydrate(item1)));
+    return _vdl.withOptional(
+      _vdl.withOptional(
+        {
+          query: input.query,
+        },
+        "txId",
+        input.txId === undefined ? undefined : input.txId,
+      ),
+      "params",
+      input.params === undefined
+        ? undefined
+        : input.params.map((item1) => QueryParam.hydrate(item1)),
+    );
   },
 } as const;
 
 /**
- * Represents one SQLite query parameter.
- *
- * When name is omitted, the parameter is positional.
- * When name is present, the parameter is named.
+ * QueryParam represents a generated VDL object.
  */
 export type QueryParam = {
   /**
@@ -421,19 +438,18 @@ export const QueryParam = {
    * Hydrates a validated QueryParam value into its runtime representation.
    */
   hydrate(input: QueryParam): QueryParam {
-    return _vdl.withOptional({
-      value: SqliteValue.hydrate(input.value),
-    }, "name", input.name === undefined ? undefined : input.name);
+    return _vdl.withOptional(
+      {
+        value: SqliteValue.hydrate(input.value),
+      },
+      "name",
+      input.name === undefined ? undefined : input.name,
+    );
   },
 } as const;
 
 /**
- * Represents one SQL query execution result.
- *
- * - For read/write results with returned rows, columns, types, and rows are present.
- * - For begin results, txId is present.
- * - For write results, lastInsertId and rowsAffected are present.
- * - For error results, error is present.
+ * QueryResult represents a generated VDL object.
  */
 export type QueryResult = {
   /**
@@ -512,7 +528,10 @@ export const QueryResult = {
     if (!_vdl.hasOwn(record0, "time") || record0["time"] === undefined) {
       return `${fieldPath0_1}: required field is missing`;
     }
-    if (typeof record0["time"] !== "number" || !Number.isFinite(record0["time"])) {
+    if (
+      typeof record0["time"] !== "number" ||
+      !Number.isFinite(record0["time"])
+    ) {
       return `${fieldPath0_1}: expected number, got ${_vdl.describeValue(record0["time"])}`;
     }
     const fieldPath0_2 = `${path}.error`;
@@ -528,14 +547,26 @@ export const QueryResult = {
       }
     }
     const fieldPath0_4 = `${path}.lastInsertId`;
-    if (_vdl.hasOwn(record0, "lastInsertId") && record0["lastInsertId"] !== undefined) {
-      if (typeof record0["lastInsertId"] !== "number" || !Number.isFinite(record0["lastInsertId"])) {
+    if (
+      _vdl.hasOwn(record0, "lastInsertId") &&
+      record0["lastInsertId"] !== undefined
+    ) {
+      if (
+        typeof record0["lastInsertId"] !== "number" ||
+        !Number.isFinite(record0["lastInsertId"])
+      ) {
         return `${fieldPath0_4}: expected number, got ${_vdl.describeValue(record0["lastInsertId"])}`;
       }
     }
     const fieldPath0_5 = `${path}.rowsAffected`;
-    if (_vdl.hasOwn(record0, "rowsAffected") && record0["rowsAffected"] !== undefined) {
-      if (typeof record0["rowsAffected"] !== "number" || !Number.isFinite(record0["rowsAffected"])) {
+    if (
+      _vdl.hasOwn(record0, "rowsAffected") &&
+      record0["rowsAffected"] !== undefined
+    ) {
+      if (
+        typeof record0["rowsAffected"] !== "number" ||
+        !Number.isFinite(record0["rowsAffected"])
+      ) {
         return `${fieldPath0_5}: expected number, got ${_vdl.describeValue(record0["rowsAffected"])}`;
       }
     }
@@ -559,7 +590,10 @@ export const QueryResult = {
       for (let index1 = 0; index1 < record0["types"].length; index1 += 1) {
         const itemPath1 = `${fieldPath0_7}[${index1}]`;
         {
-          const error = SqliteStorageClass.validate(record0["types"][index1], itemPath1);
+          const error = SqliteStorageClass.validate(
+            record0["types"][index1],
+            itemPath1,
+          );
           if (error !== null) {
             return error;
           }
@@ -576,10 +610,17 @@ export const QueryResult = {
         if (!Array.isArray(record0["rows"][index1])) {
           return `${itemPath1}: expected array, got ${_vdl.describeValue(record0["rows"][index1])}`;
         }
-        for (let index2 = 0; index2 < record0["rows"][index1].length; index2 += 1) {
+        for (
+          let index2 = 0;
+          index2 < record0["rows"][index1].length;
+          index2 += 1
+        ) {
           const itemPath2 = `${itemPath1}[${index2}]`;
           {
-            const error = SqliteValue.validate(record0["rows"][index1][index2], itemPath2);
+            const error = SqliteValue.validate(
+              record0["rows"][index1][index2],
+              itemPath2,
+            );
             if (error !== null) {
               return error;
             }
@@ -594,24 +635,51 @@ export const QueryResult = {
    * Hydrates a validated QueryResult value into its runtime representation.
    */
   hydrate(input: QueryResult): QueryResult {
-    return _vdl.withOptional(_vdl.withOptional(_vdl.withOptional(_vdl.withOptional(_vdl.withOptional(_vdl.withOptional(_vdl.withOptional({
-      type: QueryResultType.hydrate(input.type),
-      time: input.time,
-    }, "error", input.error === undefined ? undefined : input.error), "txId", input.txId === undefined ? undefined : input.txId), "lastInsertId", input.lastInsertId === undefined ? undefined : input.lastInsertId), "rowsAffected", input.rowsAffected === undefined ? undefined : input.rowsAffected), "columns", input.columns === undefined ? undefined : input.columns.map((item1) => item1)), "types", input.types === undefined ? undefined : input.types.map((item1) => SqliteStorageClass.hydrate(item1))), "rows", input.rows === undefined ? undefined : input.rows.map((item1) => item1.map((item2) => SqliteValue.hydrate(item2))));
+    return _vdl.withOptional(
+      _vdl.withOptional(
+        _vdl.withOptional(
+          _vdl.withOptional(
+            _vdl.withOptional(
+              _vdl.withOptional(
+                _vdl.withOptional(
+                  {
+                    type: QueryResultType.hydrate(input.type),
+                    time: input.time,
+                  },
+                  "error",
+                  input.error === undefined ? undefined : input.error,
+                ),
+                "txId",
+                input.txId === undefined ? undefined : input.txId,
+              ),
+              "lastInsertId",
+              input.lastInsertId === undefined ? undefined : input.lastInsertId,
+            ),
+            "rowsAffected",
+            input.rowsAffected === undefined ? undefined : input.rowsAffected,
+          ),
+          "columns",
+          input.columns === undefined
+            ? undefined
+            : input.columns.map((item1) => item1),
+        ),
+        "types",
+        input.types === undefined
+          ? undefined
+          : input.types.map((item1) => SqliteStorageClass.hydrate(item1)),
+      ),
+      "rows",
+      input.rows === undefined
+        ? undefined
+        : input.rows.map((item1) =>
+            item1.map((item2) => SqliteValue.hydrate(item2)),
+          ),
+    );
   },
 } as const;
 
 /**
- * Represents one SQLite value.
- *
- * Exactly one field must be present.
- *
- * Mappings:
- * - null    -> SQLite NULL
- * - integer -> SQLite INTEGER
- * - real    -> SQLite REAL
- * - text    -> SQLite TEXT
- * - blob    -> SQLite BLOB encoded as base64
+ * SqliteValue represents a generated VDL object.
  */
 export type SqliteValue = {
   /**
@@ -668,13 +736,19 @@ export const SqliteValue = {
     }
     const fieldPath0_1 = `${path}.integer`;
     if (_vdl.hasOwn(record0, "integer") && record0["integer"] !== undefined) {
-      if (typeof record0["integer"] !== "number" || !Number.isFinite(record0["integer"])) {
+      if (
+        typeof record0["integer"] !== "number" ||
+        !Number.isFinite(record0["integer"])
+      ) {
         return `${fieldPath0_1}: expected number, got ${_vdl.describeValue(record0["integer"])}`;
       }
     }
     const fieldPath0_2 = `${path}.real`;
     if (_vdl.hasOwn(record0, "real") && record0["real"] !== undefined) {
-      if (typeof record0["real"] !== "number" || !Number.isFinite(record0["real"])) {
+      if (
+        typeof record0["real"] !== "number" ||
+        !Number.isFinite(record0["real"])
+      ) {
         return `${fieldPath0_2}: expected number, got ${_vdl.describeValue(record0["real"])}`;
       }
     }
@@ -697,13 +771,32 @@ export const SqliteValue = {
    * Hydrates a validated SqliteValue value into its runtime representation.
    */
   hydrate(input: SqliteValue): SqliteValue {
-    return _vdl.withOptional(_vdl.withOptional(_vdl.withOptional(_vdl.withOptional(_vdl.withOptional({
-    }, "null", input.null === undefined ? undefined : input.null), "integer", input.integer === undefined ? undefined : input.integer), "real", input.real === undefined ? undefined : input.real), "text", input.text === undefined ? undefined : input.text), "blob", input.blob === undefined ? undefined : input.blob);
+    return _vdl.withOptional(
+      _vdl.withOptional(
+        _vdl.withOptional(
+          _vdl.withOptional(
+            _vdl.withOptional(
+              {},
+              "null",
+              input.null === undefined ? undefined : input.null,
+            ),
+            "integer",
+            input.integer === undefined ? undefined : input.integer,
+          ),
+          "real",
+          input.real === undefined ? undefined : input.real,
+        ),
+        "text",
+        input.text === undefined ? undefined : input.text,
+      ),
+      "blob",
+      input.blob === undefined ? undefined : input.blob,
+    );
   },
 } as const;
 
 /**
- * Aggregated server statistics including totals, queued operations, and per-minute history.
+ * Stats represents a generated VDL object.
  */
 export type Stats = {
   /**
@@ -753,17 +846,26 @@ export const Stats = {
     }
     const record0 = input as Record<string, unknown>;
     const fieldPath0_0 = `${path}.startedAt`;
-    if (!_vdl.hasOwn(record0, "startedAt") || record0["startedAt"] === undefined) {
+    if (
+      !_vdl.hasOwn(record0, "startedAt") ||
+      record0["startedAt"] === undefined
+    ) {
       return `${fieldPath0_0}: required field is missing`;
     }
     if (!_vdl.isValidDateInput(record0["startedAt"])) {
       return `${fieldPath0_0}: expected datetime string or Date, got ${_vdl.describeValue(record0["startedAt"])}`;
     }
     const fieldPath0_1 = `${path}.uptimeSeconds`;
-    if (!_vdl.hasOwn(record0, "uptimeSeconds") || record0["uptimeSeconds"] === undefined) {
+    if (
+      !_vdl.hasOwn(record0, "uptimeSeconds") ||
+      record0["uptimeSeconds"] === undefined
+    ) {
       return `${fieldPath0_1}: required field is missing`;
     }
-    if (typeof record0["uptimeSeconds"] !== "number" || !Number.isFinite(record0["uptimeSeconds"])) {
+    if (
+      typeof record0["uptimeSeconds"] !== "number" ||
+      !Number.isFinite(record0["uptimeSeconds"])
+    ) {
       return `${fieldPath0_1}: expected number, got ${_vdl.describeValue(record0["uptimeSeconds"])}`;
     }
     const fieldPath0_2 = `${path}.totals`;
@@ -771,7 +873,10 @@ export const Stats = {
       return `${fieldPath0_2}: required field is missing`;
     }
     {
-      const error = StatsTotalsCounters.validate(record0["totals"], fieldPath0_2);
+      const error = StatsTotalsCounters.validate(
+        record0["totals"],
+        fieldPath0_2,
+      );
       if (error !== null) {
         return error;
       }
@@ -781,7 +886,10 @@ export const Stats = {
       return `${fieldPath0_3}: required field is missing`;
     }
     {
-      const error = StatsQueuedCounters.validate(record0["queued"], fieldPath0_3);
+      const error = StatsQueuedCounters.validate(
+        record0["queued"],
+        fieldPath0_3,
+      );
       if (error !== null) {
         return error;
       }
@@ -816,13 +924,15 @@ export const Stats = {
       uptimeSeconds: input.uptimeSeconds,
       totals: StatsTotalsCounters.hydrate(input.totals),
       queued: StatsQueuedCounters.hydrate(input.queued),
-      minutes: _vdl.mapRecord(input.minutes, (value1) => StatsTotalsCounters.hydrate(value1)),
+      minutes: _vdl.mapRecord(input.minutes, (value1) =>
+        StatsTotalsCounters.hydrate(value1),
+      ),
     };
   },
 } as const;
 
 /**
- * Statistics counters for operations that are currently queued or in-flight.
+ * StatsQueuedCounters represents a generated VDL object.
  */
 export type StatsQueuedCounters = {
   /**
@@ -867,21 +977,33 @@ export const StatsQueuedCounters = {
     if (!_vdl.hasOwn(record0, "begins") || record0["begins"] === undefined) {
       return `${fieldPath0_0}: required field is missing`;
     }
-    if (typeof record0["begins"] !== "number" || !Number.isFinite(record0["begins"])) {
+    if (
+      typeof record0["begins"] !== "number" ||
+      !Number.isFinite(record0["begins"])
+    ) {
       return `${fieldPath0_0}: expected number, got ${_vdl.describeValue(record0["begins"])}`;
     }
     const fieldPath0_1 = `${path}.writes`;
     if (!_vdl.hasOwn(record0, "writes") || record0["writes"] === undefined) {
       return `${fieldPath0_1}: required field is missing`;
     }
-    if (typeof record0["writes"] !== "number" || !Number.isFinite(record0["writes"])) {
+    if (
+      typeof record0["writes"] !== "number" ||
+      !Number.isFinite(record0["writes"])
+    ) {
       return `${fieldPath0_1}: expected number, got ${_vdl.describeValue(record0["writes"])}`;
     }
     const fieldPath0_2 = `${path}.httpRequests`;
-    if (!_vdl.hasOwn(record0, "httpRequests") || record0["httpRequests"] === undefined) {
+    if (
+      !_vdl.hasOwn(record0, "httpRequests") ||
+      record0["httpRequests"] === undefined
+    ) {
       return `${fieldPath0_2}: required field is missing`;
     }
-    if (typeof record0["httpRequests"] !== "number" || !Number.isFinite(record0["httpRequests"])) {
+    if (
+      typeof record0["httpRequests"] !== "number" ||
+      !Number.isFinite(record0["httpRequests"])
+    ) {
       return `${fieldPath0_2}: expected number, got ${_vdl.describeValue(record0["httpRequests"])}`;
     }
     return null;
@@ -900,7 +1022,7 @@ export const StatsQueuedCounters = {
 } as const;
 
 /**
- * Statistics counters for operations that have completed.
+ * StatsTotalsCounters represents a generated VDL object.
  */
 export type StatsTotalsCounters = {
   /**
@@ -961,49 +1083,76 @@ export const StatsTotalsCounters = {
     if (!_vdl.hasOwn(record0, "reads") || record0["reads"] === undefined) {
       return `${fieldPath0_0}: required field is missing`;
     }
-    if (typeof record0["reads"] !== "number" || !Number.isFinite(record0["reads"])) {
+    if (
+      typeof record0["reads"] !== "number" ||
+      !Number.isFinite(record0["reads"])
+    ) {
       return `${fieldPath0_0}: expected number, got ${_vdl.describeValue(record0["reads"])}`;
     }
     const fieldPath0_1 = `${path}.writes`;
     if (!_vdl.hasOwn(record0, "writes") || record0["writes"] === undefined) {
       return `${fieldPath0_1}: required field is missing`;
     }
-    if (typeof record0["writes"] !== "number" || !Number.isFinite(record0["writes"])) {
+    if (
+      typeof record0["writes"] !== "number" ||
+      !Number.isFinite(record0["writes"])
+    ) {
       return `${fieldPath0_1}: expected number, got ${_vdl.describeValue(record0["writes"])}`;
     }
     const fieldPath0_2 = `${path}.begins`;
     if (!_vdl.hasOwn(record0, "begins") || record0["begins"] === undefined) {
       return `${fieldPath0_2}: required field is missing`;
     }
-    if (typeof record0["begins"] !== "number" || !Number.isFinite(record0["begins"])) {
+    if (
+      typeof record0["begins"] !== "number" ||
+      !Number.isFinite(record0["begins"])
+    ) {
       return `${fieldPath0_2}: expected number, got ${_vdl.describeValue(record0["begins"])}`;
     }
     const fieldPath0_3 = `${path}.commits`;
     if (!_vdl.hasOwn(record0, "commits") || record0["commits"] === undefined) {
       return `${fieldPath0_3}: required field is missing`;
     }
-    if (typeof record0["commits"] !== "number" || !Number.isFinite(record0["commits"])) {
+    if (
+      typeof record0["commits"] !== "number" ||
+      !Number.isFinite(record0["commits"])
+    ) {
       return `${fieldPath0_3}: expected number, got ${_vdl.describeValue(record0["commits"])}`;
     }
     const fieldPath0_4 = `${path}.rollbacks`;
-    if (!_vdl.hasOwn(record0, "rollbacks") || record0["rollbacks"] === undefined) {
+    if (
+      !_vdl.hasOwn(record0, "rollbacks") ||
+      record0["rollbacks"] === undefined
+    ) {
       return `${fieldPath0_4}: required field is missing`;
     }
-    if (typeof record0["rollbacks"] !== "number" || !Number.isFinite(record0["rollbacks"])) {
+    if (
+      typeof record0["rollbacks"] !== "number" ||
+      !Number.isFinite(record0["rollbacks"])
+    ) {
       return `${fieldPath0_4}: expected number, got ${_vdl.describeValue(record0["rollbacks"])}`;
     }
     const fieldPath0_5 = `${path}.errors`;
     if (!_vdl.hasOwn(record0, "errors") || record0["errors"] === undefined) {
       return `${fieldPath0_5}: required field is missing`;
     }
-    if (typeof record0["errors"] !== "number" || !Number.isFinite(record0["errors"])) {
+    if (
+      typeof record0["errors"] !== "number" ||
+      !Number.isFinite(record0["errors"])
+    ) {
       return `${fieldPath0_5}: expected number, got ${_vdl.describeValue(record0["errors"])}`;
     }
     const fieldPath0_6 = `${path}.httpRequests`;
-    if (!_vdl.hasOwn(record0, "httpRequests") || record0["httpRequests"] === undefined) {
+    if (
+      !_vdl.hasOwn(record0, "httpRequests") ||
+      record0["httpRequests"] === undefined
+    ) {
       return `${fieldPath0_6}: required field is missing`;
     }
-    if (typeof record0["httpRequests"] !== "number" || !Number.isFinite(record0["httpRequests"])) {
+    if (
+      typeof record0["httpRequests"] !== "number" ||
+      !Number.isFinite(record0["httpRequests"])
+    ) {
       return `${fieldPath0_6}: expected number, got ${_vdl.describeValue(record0["httpRequests"])}`;
     }
     return null;
@@ -1148,7 +1297,10 @@ export const SystemHealth = {
       return `${fieldPath0_0}: required field is missing`;
     }
     {
-      const error = SystemHealthOutput.validate(record0["output"], fieldPath0_0);
+      const error = SystemHealthOutput.validate(
+        record0["output"],
+        fieldPath0_0,
+      );
       if (error !== null) {
         return error;
       }
@@ -1216,7 +1368,10 @@ export const SystemHealthOutput = {
       return `${fieldPath0_0}: expected boolean, got ${_vdl.describeValue(record0["healthy"])}`;
     }
     const fieldPath0_1 = `${path}.database`;
-    if (!_vdl.hasOwn(record0, "database") || record0["database"] === undefined) {
+    if (
+      !_vdl.hasOwn(record0, "database") ||
+      record0["database"] === undefined
+    ) {
       return `${fieldPath0_1}: required field is missing`;
     }
     if (typeof record0["database"] !== "boolean") {
@@ -1280,7 +1435,10 @@ export const SystemSession = {
       return `${fieldPath0_0}: required field is missing`;
     }
     {
-      const error = SystemSessionOutput.validate(record0["output"], fieldPath0_0);
+      const error = SystemSessionOutput.validate(
+        record0["output"],
+        fieldPath0_0,
+      );
       if (error !== null) {
         return error;
       }
@@ -1391,7 +1549,10 @@ export const SystemStatus = {
       return `${fieldPath0_0}: required field is missing`;
     }
     {
-      const error = SystemStatusOutput.validate(record0["output"], fieldPath0_0);
+      const error = SystemStatusOutput.validate(
+        record0["output"],
+        fieldPath0_0,
+      );
       if (error !== null) {
         return error;
       }
@@ -1509,7 +1670,9 @@ const _vdl = {
   /**
    * Returns own enumerable entries from a record in insertion order.
    */
-  recordEntries<TValue>(record: Record<string, TValue>): Array<[string, TValue]> {
+  recordEntries<TValue>(
+    record: Record<string, TValue>,
+  ): Array<[string, TValue]> {
     const entries: Array<[string, TValue]> = [];
     for (const key in record) {
       if (Object.prototype.hasOwnProperty.call(record, key)) {
@@ -1523,7 +1686,10 @@ const _vdl = {
   /**
    * Creates a new record by mapping every own enumerable value.
    */
-  mapRecord<TInput, TOutput>(record: Record<string, TInput>, mapValue: (value: TInput) => TOutput): Record<string, TOutput> {
+  mapRecord<TInput, TOutput>(
+    record: Record<string, TInput>,
+    mapValue: (value: TInput) => TOutput,
+  ): Record<string, TOutput> {
     const output: Record<string, TOutput> = {};
     for (const key in record) {
       if (Object.prototype.hasOwnProperty.call(record, key)) {
@@ -1537,7 +1703,11 @@ const _vdl = {
   /**
    * Adds an optional property only when the value is defined.
    */
-  withOptional<TRecord extends object, TKey extends string, TValue>(record: TRecord, key: TKey, value: TValue | undefined): TRecord & Partial<Record<TKey, TValue>> {
+  withOptional<TRecord extends object, TKey extends string, TValue>(
+    record: TRecord,
+    key: TKey,
+    value: TValue | undefined,
+  ): TRecord & Partial<Record<TKey, TValue>> {
     const mutable = record as Record<string, unknown>;
     if (value !== undefined) {
       mutable[key] = value;
@@ -1549,7 +1719,12 @@ const _vdl = {
    * Checks whether a value can be validated as a plain object record.
    */
   isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === "object" && value !== null && !Array.isArray(value) && !(value instanceof Date);
+    return (
+      typeof value === "object" &&
+      value !== null &&
+      !Array.isArray(value) &&
+      !(value instanceof Date)
+    );
   },
 
   /**

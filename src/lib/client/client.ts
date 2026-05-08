@@ -14,32 +14,32 @@ import * as vdlTypes from "./types.js";
  */
 export const VDLProcedures: OperationDefinition[] = [
   {
-    "rpcName": "Database",
-    "name": "query",
-    "type": "proc",
-    "path": "/Database/query",
-    "annotations": []
+    rpcName: "Database",
+    name: "query",
+    type: "proc",
+    path: "/Database/query",
+    annotations: [],
   },
   {
-    "rpcName": "System",
-    "name": "health",
-    "type": "proc",
-    "path": "/System/health",
-    "annotations": []
+    rpcName: "System",
+    name: "health",
+    type: "proc",
+    path: "/System/health",
+    annotations: [],
   },
   {
-    "rpcName": "System",
-    "name": "session",
-    "type": "proc",
-    "path": "/System/session",
-    "annotations": []
+    rpcName: "System",
+    name: "session",
+    type: "proc",
+    path: "/System/session",
+    annotations: [],
   },
   {
-    "rpcName": "System",
-    "name": "status",
-    "type": "proc",
-    "path": "/System/status",
-    "annotations": []
+    rpcName: "System",
+    name: "status",
+    type: "proc",
+    path: "/System/status",
+    annotations: [],
   },
 ] as const;
 
@@ -47,9 +47,7 @@ export const VDLProcedures: OperationDefinition[] = [
  * VDLStreams lists every generated stream definition with preserved schema metadata.
  * Use it for introspection, tracing, and building operation-aware tooling.
  */
-export const VDLStreams: OperationDefinition[] = [
-
-] as const;
+export const VDLStreams: OperationDefinition[] = [] as const;
 
 /**
  * VDLPaths maps rpcName -> operationName -> relative URL path.
@@ -129,7 +127,8 @@ export const Void = {
   /** Validates that the provided value is an empty object. */
   validate(input: unknown, path = "Void"): string | null {
     if (typeof input !== "object" || input === null || Array.isArray(input)) {
-      const got = input === null ? "null" : Array.isArray(input) ? "array" : typeof input;
+      const got =
+        input === null ? "null" : Array.isArray(input) ? "array" : typeof input;
       return path + ": expected object, got " + got;
     }
 
@@ -148,7 +147,7 @@ export const Void = {
 
 /**
  * Response envelope returned by VDL procedures and yielded by VDL streams.
- * 
+ *
  * @typeParam T - The concrete type of the successful response output.
  */
 export type Response<T> =
@@ -780,10 +779,7 @@ class internalClient {
    * Resolves the effective retry configuration for a request.
    * Priority: operation-level > RPC-level > global > built-in defaults.
    */
-  private mergeRetryConfig(
-    rpcName: string,
-    opConf?: RetryConfig,
-  ): RetryConfig {
+  private mergeRetryConfig(rpcName: string, opConf?: RetryConfig): RetryConfig {
     return {
       ...defaultRetryConfig,
       ...(this.globalRetryConf ?? {}),
@@ -793,9 +789,9 @@ class internalClient {
         ? { shouldRetry: opConf.shouldRetry }
         : this.rpcRetryConf.get(rpcName)?.shouldRetry
           ? { shouldRetry: this.rpcRetryConf.get(rpcName)?.shouldRetry }
-        : this.globalRetryConf?.shouldRetry
-          ? { shouldRetry: this.globalRetryConf.shouldRetry }
-          : {}),
+          : this.globalRetryConf?.shouldRetry
+            ? { shouldRetry: this.globalRetryConf.shouldRetry }
+            : {}),
     };
   }
 
@@ -835,9 +831,9 @@ class internalClient {
               shouldReconnect:
                 this.rpcReconnectConf.get(rpcName)?.shouldReconnect,
             }
-        : this.globalReconnectConf?.shouldReconnect
-          ? { shouldReconnect: this.globalReconnectConf.shouldReconnect }
-          : {}),
+          : this.globalReconnectConf?.shouldReconnect
+            ? { shouldReconnect: this.globalReconnectConf.shouldReconnect }
+            : {}),
     };
   }
 
@@ -1857,13 +1853,16 @@ class ClientRPCRegistry {
   /**
    * Access the Database RPC service.
    */
-  database(): ClientDatabaseRPC { return new ClientDatabaseRPC(this.intClient); }
+  database(): ClientDatabaseRPC {
+    return new ClientDatabaseRPC(this.intClient);
+  }
 
   /**
    * Access the System RPC service.
    */
-  system(): ClientSystemRPC { return new ClientSystemRPC(this.intClient); }
-
+  system(): ClientSystemRPC {
+    return new ClientSystemRPC(this.intClient);
+  }
 }
 
 /**
@@ -1884,7 +1883,9 @@ class ClientDatabaseRPC {
    * Adds a static default header for every Database request.
    */
   withHeader(key: string, value: string): ClientDatabaseRPC {
-    this.intClient.setRPCHeaderProvider("Database", (headers) => { headers[key] = value; });
+    this.intClient.setRPCHeaderProvider("Database", (headers) => {
+      headers[key] = value;
+    });
     return this;
   }
 
@@ -1900,7 +1901,10 @@ class ClientDatabaseRPC {
    * Sets the default retry policy for procedures in Database.
    */
   withRetries(config: Partial<RetryConfig>): ClientDatabaseRPC {
-    this.intClient.setRPCRetryConfig("Database", normalizeRetryConfig(config, 3));
+    this.intClient.setRPCRetryConfig(
+      "Database",
+      normalizeRetryConfig(config, 3),
+    );
     return this;
   }
 
@@ -1908,7 +1912,10 @@ class ClientDatabaseRPC {
    * Sets the exact retry configuration for procedures in Database.
    */
   withRetryConfig(config: RetryConfig): ClientDatabaseRPC {
-    this.intClient.setRPCRetryConfig("Database", normalizeRetryConfig(config, config.maxAttempts));
+    this.intClient.setRPCRetryConfig(
+      "Database",
+      normalizeRetryConfig(config, config.maxAttempts),
+    );
     return this;
   }
 
@@ -1916,7 +1923,10 @@ class ClientDatabaseRPC {
    * Sets the default timeout policy for procedures in Database.
    */
   withTimeout(config: Partial<TimeoutConfig>): ClientDatabaseRPC {
-    this.intClient.setRPCTimeoutConfig("Database", normalizeTimeoutConfig(config));
+    this.intClient.setRPCTimeoutConfig(
+      "Database",
+      normalizeTimeoutConfig(config),
+    );
     return this;
   }
 
@@ -1924,7 +1934,10 @@ class ClientDatabaseRPC {
    * Sets the exact timeout configuration for procedures in Database.
    */
   withTimeoutConfig(config: TimeoutConfig): ClientDatabaseRPC {
-    this.intClient.setRPCTimeoutConfig("Database", normalizeTimeoutConfig(config));
+    this.intClient.setRPCTimeoutConfig(
+      "Database",
+      normalizeTimeoutConfig(config),
+    );
     return this;
   }
 
@@ -1932,7 +1945,10 @@ class ClientDatabaseRPC {
    * Sets the default reconnect policy for streams in Database.
    */
   withReconnect(config: Partial<ReconnectConfig>): ClientDatabaseRPC {
-    this.intClient.setRPCReconnectConfig("Database", normalizeReconnectConfig(config, 5));
+    this.intClient.setRPCReconnectConfig(
+      "Database",
+      normalizeReconnectConfig(config, 5),
+    );
     return this;
   }
 
@@ -1940,7 +1956,10 @@ class ClientDatabaseRPC {
    * Sets the exact reconnect configuration for streams in Database.
    */
   withReconnectConfig(config: ReconnectConfig): ClientDatabaseRPC {
-    this.intClient.setRPCReconnectConfig("Database", normalizeReconnectConfig(config, config.maxAttempts));
+    this.intClient.setRPCReconnectConfig(
+      "Database",
+      normalizeReconnectConfig(config, config.maxAttempts),
+    );
     return this;
   }
 
@@ -1968,8 +1987,9 @@ class ClientDatabaseProcs {
    * Queries are executed in order and each query returns one result item.
    * Empty or failed queries are returned as result items with type "error".
    */
-  query(): ProcDatabasequeryBuilder { return new ProcDatabasequeryBuilder(this.intClient, "Database", "query"); }
-
+  query(): ProcDatabasequeryBuilder {
+    return new ProcDatabasequeryBuilder(this.intClient, "Database", "query");
+  }
 }
 
 /**
@@ -1980,7 +2000,6 @@ class ClientDatabaseStreams {
   constructor(intClient: internalClient) {
     this.intClient = intClient;
   }
-
 }
 
 /**
@@ -2001,7 +2020,9 @@ class ClientSystemRPC {
    * Adds a static default header for every System request.
    */
   withHeader(key: string, value: string): ClientSystemRPC {
-    this.intClient.setRPCHeaderProvider("System", (headers) => { headers[key] = value; });
+    this.intClient.setRPCHeaderProvider("System", (headers) => {
+      headers[key] = value;
+    });
     return this;
   }
 
@@ -2025,7 +2046,10 @@ class ClientSystemRPC {
    * Sets the exact retry configuration for procedures in System.
    */
   withRetryConfig(config: RetryConfig): ClientSystemRPC {
-    this.intClient.setRPCRetryConfig("System", normalizeRetryConfig(config, config.maxAttempts));
+    this.intClient.setRPCRetryConfig(
+      "System",
+      normalizeRetryConfig(config, config.maxAttempts),
+    );
     return this;
   }
 
@@ -2033,7 +2057,10 @@ class ClientSystemRPC {
    * Sets the default timeout policy for procedures in System.
    */
   withTimeout(config: Partial<TimeoutConfig>): ClientSystemRPC {
-    this.intClient.setRPCTimeoutConfig("System", normalizeTimeoutConfig(config));
+    this.intClient.setRPCTimeoutConfig(
+      "System",
+      normalizeTimeoutConfig(config),
+    );
     return this;
   }
 
@@ -2041,7 +2068,10 @@ class ClientSystemRPC {
    * Sets the exact timeout configuration for procedures in System.
    */
   withTimeoutConfig(config: TimeoutConfig): ClientSystemRPC {
-    this.intClient.setRPCTimeoutConfig("System", normalizeTimeoutConfig(config));
+    this.intClient.setRPCTimeoutConfig(
+      "System",
+      normalizeTimeoutConfig(config),
+    );
     return this;
   }
 
@@ -2049,7 +2079,10 @@ class ClientSystemRPC {
    * Sets the default reconnect policy for streams in System.
    */
   withReconnect(config: Partial<ReconnectConfig>): ClientSystemRPC {
-    this.intClient.setRPCReconnectConfig("System", normalizeReconnectConfig(config, 5));
+    this.intClient.setRPCReconnectConfig(
+      "System",
+      normalizeReconnectConfig(config, 5),
+    );
     return this;
   }
 
@@ -2057,7 +2090,10 @@ class ClientSystemRPC {
    * Sets the exact reconnect configuration for streams in System.
    */
   withReconnectConfig(config: ReconnectConfig): ClientSystemRPC {
-    this.intClient.setRPCReconnectConfig("System", normalizeReconnectConfig(config, config.maxAttempts));
+    this.intClient.setRPCReconnectConfig(
+      "System",
+      normalizeReconnectConfig(config, config.maxAttempts),
+    );
     return this;
   }
 
@@ -2082,18 +2118,23 @@ class ClientSystemProcs {
   /**
    * Checks whether the server can perform a basic database read.
    */
-  health(): ProcSystemhealthBuilder { return new ProcSystemhealthBuilder(this.intClient, "System", "health"); }
+  health(): ProcSystemhealthBuilder {
+    return new ProcSystemhealthBuilder(this.intClient, "System", "health");
+  }
 
   /**
    * Returns the authentication role for the current session.
    */
-  session(): ProcSystemsessionBuilder { return new ProcSystemsessionBuilder(this.intClient, "System", "session"); }
+  session(): ProcSystemsessionBuilder {
+    return new ProcSystemsessionBuilder(this.intClient, "System", "session");
+  }
 
   /**
    * Returns server information and runtime statistics.
    */
-  status(): ProcSystemstatusBuilder { return new ProcSystemstatusBuilder(this.intClient, "System", "status"); }
-
+  status(): ProcSystemstatusBuilder {
+    return new ProcSystemstatusBuilder(this.intClient, "System", "status");
+  }
 }
 
 /**
@@ -2104,7 +2145,6 @@ class ClientSystemStreams {
   constructor(intClient: internalClient) {
     this.intClient = intClient;
   }
-
 }
 
 /**
@@ -2122,23 +2162,30 @@ class ProcRegistry {
    * Queries are executed in order and each query returns one result item.
    * Empty or failed queries are returned as result items with type "error".
    */
-  databaseQuery(): ProcDatabasequeryBuilder { return new ProcDatabasequeryBuilder(this.intClient, "Database", "query"); }
+  databaseQuery(): ProcDatabasequeryBuilder {
+    return new ProcDatabasequeryBuilder(this.intClient, "Database", "query");
+  }
 
   /**
    * Checks whether the server can perform a basic database read.
    */
-  systemHealth(): ProcSystemhealthBuilder { return new ProcSystemhealthBuilder(this.intClient, "System", "health"); }
+  systemHealth(): ProcSystemhealthBuilder {
+    return new ProcSystemhealthBuilder(this.intClient, "System", "health");
+  }
 
   /**
    * Returns the authentication role for the current session.
    */
-  systemSession(): ProcSystemsessionBuilder { return new ProcSystemsessionBuilder(this.intClient, "System", "session"); }
+  systemSession(): ProcSystemsessionBuilder {
+    return new ProcSystemsessionBuilder(this.intClient, "System", "session");
+  }
 
   /**
    * Returns server information and runtime statistics.
    */
-  systemStatus(): ProcSystemstatusBuilder { return new ProcSystemstatusBuilder(this.intClient, "System", "status"); }
-
+  systemStatus(): ProcSystemstatusBuilder {
+    return new ProcSystemstatusBuilder(this.intClient, "System", "status");
+  }
 }
 
 class ProcDatabasequeryBuilder {
@@ -2160,7 +2207,9 @@ class ProcDatabasequeryBuilder {
    * Adds a static header to this procedure call.
    */
   withHeader(key: string, value: string): ProcDatabasequeryBuilder {
-    this.headerProviders.push((headers) => { headers[key] = value; });
+    this.headerProviders.push((headers) => {
+      headers[key] = value;
+    });
     return this;
   }
 
@@ -2218,16 +2267,32 @@ class ProcDatabasequeryBuilder {
    * Queries are executed in order and each query returns one result item.
    * Empty or failed queries are returned as result items with type "error".
    */
-  async execute(input: vdlTypes.DatabaseQueryInput): Promise<vdlTypes.DatabaseQueryOutput> {
+  async execute(
+    input: vdlTypes.DatabaseQueryInput,
+  ): Promise<vdlTypes.DatabaseQueryOutput> {
     const validationError = vdlTypes.DatabaseQueryInput.validate(input);
     if (validationError !== null) {
-      throw new VdlError({ message: validationError, code: "INVALID_INPUT", category: "ValidationError" });
+      throw new VdlError({
+        message: validationError,
+        code: "INVALID_INPUT",
+        category: "ValidationError",
+      });
     }
-    const rawResponse = await this.intClient.callProc(this.rpcName, this.procName, input, this.headerProviders, this.retryConfig, this.timeoutConfig, this.signal);
+    const rawResponse = await this.intClient.callProc(
+      this.rpcName,
+      this.procName,
+      input,
+      this.headerProviders,
+      this.retryConfig,
+      this.timeoutConfig,
+      this.signal,
+    );
     if (!rawResponse.ok) {
       throw rawResponse.error;
     }
-    return vdlTypes.DatabaseQueryOutput.hydrate(rawResponse.output as vdlTypes.DatabaseQueryOutput);
+    return vdlTypes.DatabaseQueryOutput.hydrate(
+      rawResponse.output as vdlTypes.DatabaseQueryOutput,
+    );
   }
 }
 
@@ -2250,7 +2315,9 @@ class ProcSystemhealthBuilder {
    * Adds a static header to this procedure call.
    */
   withHeader(key: string, value: string): ProcSystemhealthBuilder {
-    this.headerProviders.push((headers) => { headers[key] = value; });
+    this.headerProviders.push((headers) => {
+      headers[key] = value;
+    });
     return this;
   }
 
@@ -2308,13 +2375,27 @@ class ProcSystemhealthBuilder {
   async execute(input: Void = {}): Promise<vdlTypes.SystemHealthOutput> {
     const validationError = Void.validate(input);
     if (validationError !== null) {
-      throw new VdlError({ message: validationError, code: "INVALID_INPUT", category: "ValidationError" });
+      throw new VdlError({
+        message: validationError,
+        code: "INVALID_INPUT",
+        category: "ValidationError",
+      });
     }
-    const rawResponse = await this.intClient.callProc(this.rpcName, this.procName, input, this.headerProviders, this.retryConfig, this.timeoutConfig, this.signal);
+    const rawResponse = await this.intClient.callProc(
+      this.rpcName,
+      this.procName,
+      input,
+      this.headerProviders,
+      this.retryConfig,
+      this.timeoutConfig,
+      this.signal,
+    );
     if (!rawResponse.ok) {
       throw rawResponse.error;
     }
-    return vdlTypes.SystemHealthOutput.hydrate(rawResponse.output as vdlTypes.SystemHealthOutput);
+    return vdlTypes.SystemHealthOutput.hydrate(
+      rawResponse.output as vdlTypes.SystemHealthOutput,
+    );
   }
 }
 
@@ -2337,7 +2418,9 @@ class ProcSystemsessionBuilder {
    * Adds a static header to this procedure call.
    */
   withHeader(key: string, value: string): ProcSystemsessionBuilder {
-    this.headerProviders.push((headers) => { headers[key] = value; });
+    this.headerProviders.push((headers) => {
+      headers[key] = value;
+    });
     return this;
   }
 
@@ -2395,13 +2478,27 @@ class ProcSystemsessionBuilder {
   async execute(input: Void = {}): Promise<vdlTypes.SystemSessionOutput> {
     const validationError = Void.validate(input);
     if (validationError !== null) {
-      throw new VdlError({ message: validationError, code: "INVALID_INPUT", category: "ValidationError" });
+      throw new VdlError({
+        message: validationError,
+        code: "INVALID_INPUT",
+        category: "ValidationError",
+      });
     }
-    const rawResponse = await this.intClient.callProc(this.rpcName, this.procName, input, this.headerProviders, this.retryConfig, this.timeoutConfig, this.signal);
+    const rawResponse = await this.intClient.callProc(
+      this.rpcName,
+      this.procName,
+      input,
+      this.headerProviders,
+      this.retryConfig,
+      this.timeoutConfig,
+      this.signal,
+    );
     if (!rawResponse.ok) {
       throw rawResponse.error;
     }
-    return vdlTypes.SystemSessionOutput.hydrate(rawResponse.output as vdlTypes.SystemSessionOutput);
+    return vdlTypes.SystemSessionOutput.hydrate(
+      rawResponse.output as vdlTypes.SystemSessionOutput,
+    );
   }
 }
 
@@ -2424,7 +2521,9 @@ class ProcSystemstatusBuilder {
    * Adds a static header to this procedure call.
    */
   withHeader(key: string, value: string): ProcSystemstatusBuilder {
-    this.headerProviders.push((headers) => { headers[key] = value; });
+    this.headerProviders.push((headers) => {
+      headers[key] = value;
+    });
     return this;
   }
 
@@ -2482,13 +2581,27 @@ class ProcSystemstatusBuilder {
   async execute(input: Void = {}): Promise<vdlTypes.SystemStatusOutput> {
     const validationError = Void.validate(input);
     if (validationError !== null) {
-      throw new VdlError({ message: validationError, code: "INVALID_INPUT", category: "ValidationError" });
+      throw new VdlError({
+        message: validationError,
+        code: "INVALID_INPUT",
+        category: "ValidationError",
+      });
     }
-    const rawResponse = await this.intClient.callProc(this.rpcName, this.procName, input, this.headerProviders, this.retryConfig, this.timeoutConfig, this.signal);
+    const rawResponse = await this.intClient.callProc(
+      this.rpcName,
+      this.procName,
+      input,
+      this.headerProviders,
+      this.retryConfig,
+      this.timeoutConfig,
+      this.signal,
+    );
     if (!rawResponse.ok) {
       throw rawResponse.error;
     }
-    return vdlTypes.SystemStatusOutput.hydrate(rawResponse.output as vdlTypes.SystemStatusOutput);
+    return vdlTypes.SystemStatusOutput.hydrate(
+      rawResponse.output as vdlTypes.SystemStatusOutput,
+    );
   }
 }
 
@@ -2500,5 +2613,4 @@ class StreamRegistry {
   constructor(intClient: internalClient) {
     this.intClient = intClient;
   }
-
 }
