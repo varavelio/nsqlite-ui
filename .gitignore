@@ -24,7 +24,7 @@ node_modules
 .svelte-kit
 build
 site
-docs/schema/
+static/schema/
 
 # OS
 .DS_Store
