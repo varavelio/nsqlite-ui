@@ -4,8 +4,7 @@
     Badge,
     Button,
     Card,
-    Heading,
-    Label,
+    Kbd,
     Table,
     Textarea,
   } from "@varavel/ui";
@@ -20,7 +19,7 @@
   let running = $state(false);
 
   async function execute() {
-    if (!store.client || !sql.trim()) return;
+    if (!store.client || !sql.trim() || running) return;
 
     error = "";
     results = [];
@@ -36,6 +35,13 @@
       error = e instanceof Error ? e.message : String(e);
     } finally {
       running = false;
+    }
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault();
+      execute();
     }
   }
 
@@ -61,23 +67,37 @@
 
 <div class="flex flex-col gap-5">
   <Card padding="lg">
-    <div class="flex flex-col gap-3">
+    <div class="flex flex-col gap-4">
       <div>
-        <Heading level="2" size="md">Manual SQL query</Heading>
-        <p class="mt-1 text-sm text-(--color-text-muted)">
-          Run ad-hoc read or write statements directly against the connected
-          database.
+        <div class="flex items-center justify-between mb-1">
+          <div class="flex items-center gap-2">
+            <h2
+              class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
+            >
+              Manual SQL Query
+            </h2>
+          </div>
+          <Badge variant="outline" color="neutral" size="sm">
+            Ad-hoc execution
+          </Badge>
+        </div>
+        <p class="text-sm text-(--color-text-muted) flex items-center gap-1">
+          Run read or write statements directly against the connected database.
+          Press <Kbd size="sm">Cmd/Ctrl + Enter</Kbd> to execute.
         </p>
       </div>
 
-      <Label for="sql-editor">SQL Query</Label>
-      <Textarea
-        id="sql-editor"
-        placeholder="SELECT * FROM sqlite_master;"
-        bind:value={sql}
-        rows={5}
-      />
-      <div class="flex flex-wrap items-center gap-3">
+      <div class="relative">
+        <Textarea
+          id="sql-editor"
+          placeholder="SELECT * FROM sqlite_master;"
+          bind:value={sql}
+          onkeydown={handleKeydown}
+          rows={6}
+          class="font-mono text-sm shadow-inner"
+        />
+      </div>
+      <div class="flex flex-wrap items-center justify-between gap-3">
         <Button
           color="info"
           size="md"
@@ -85,13 +105,19 @@
           disabled={running || !sql.trim()}
           onclick={execute}
         >
-          Execute
+          Execute Query
         </Button>
+
         {#if !running && results.length > 0}
-          <span class="text-xs text-(--color-text-muted)">
-            {results.length} result{results.length !== 1 ? "s" : ""} in {totalTime.toFixed(3)}
-            s
-          </span>
+          <div
+            class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
+          >
+            <span>
+              {results.length} result{results.length !== 1 ? "s" : ""}
+            </span>
+            <span class="text-base-400">•</span>
+            <span>{totalTime.toFixed(3)}s total time</span>
+          </div>
         {/if}
       </div>
     </div>
@@ -102,62 +128,115 @@
   {/if}
 
   {#each results as result, resultIndex (`${result.time}-${resultIndex}`)}
-    <Card padding="lg">
-      <div class="mb-3 flex items-center gap-2">
-        <Badge color={resultBadgeColor(result.type)} size="sm">
-          {result.type}
-        </Badge>
-        <span class="text-xs text-(--color-text-muted)">
-          {result.time.toFixed(4)}
-          s
-        </span>
-        {#if result.txId}
-          <span class="text-xs text-(--color-text-muted)">
-            tx: {result.txId}
-          </span>
-        {/if}
-        {#if result.lastInsertId !== undefined}
-          <span class="text-xs text-(--color-text-muted)">
-            lastId: {result.lastInsertId}
-          </span>
-        {/if}
-        {#if result.rowsAffected !== undefined}
-          <span class="text-xs text-(--color-text-muted)">
-            rows: {result.rowsAffected}
-          </span>
-        {/if}
-      </div>
+    <Card padding="none" class="overflow-hidden">
+      <div class="flex flex-col">
+        <div
+          class="flex items-center justify-between border-b border-base-400 bg-base-100 p-4"
+        >
+          <div class="flex items-center gap-3">
+            <Badge
+              color={resultBadgeColor(result.type)}
+              variant="soft"
+              size="sm"
+              class="uppercase tracking-wider"
+            >
+              {result.type}
+            </Badge>
+            <span
+              class="text-xs font-mono font-semibold text-(--color-text-muted)"
+            >
+              {result.time.toFixed(4)}
+              s
+            </span>
+          </div>
+          <div class="flex items-center gap-3">
+            {#if result.txId}
+              <div class="flex items-center gap-1.5">
+                <span
+                  class="text-xs uppercase tracking-wider text-(--color-text-muted)"
+                >
+                  TX
+                </span>
+                <span class="text-xs font-mono font-bold">{result.txId}</span>
+              </div>
+            {/if}
+            {#if result.lastInsertId !== undefined}
+              {#if result.txId}
+                <span class="text-base-400">•</span>
+              {/if}
+              <div class="flex items-center gap-1.5">
+                <span
+                  class="text-xs uppercase tracking-wider text-(--color-text-muted)"
+                >
+                  Last ID
+                </span>
+                <span class="text-xs font-mono font-bold text-(--color-info)">
+                  {result.lastInsertId}
+                </span>
+              </div>
+            {/if}
+            {#if result.rowsAffected !== undefined}
+              {#if result.txId || result.lastInsertId !== undefined}
+                <span class="text-base-400">•</span>
+              {/if}
+              <div class="flex items-center gap-1.5">
+                <span
+                  class="text-xs uppercase tracking-wider text-(--color-text-muted)"
+                >
+                  Rows
+                </span>
+                <span
+                  class="text-xs font-mono font-bold text-(--color-warning)"
+                >
+                  {result.rowsAffected}
+                </span>
+              </div>
+            {/if}
+          </div>
+        </div>
 
-      {#if result.error}
-        <Alert color="error">{result.error}</Alert>
-      {/if}
+        {#if result.error}
+          <div class="p-4">
+            <Alert color="error">{result.error}</Alert>
+          </div>
+        {/if}
 
-      {#if result.columns && result.rows && result.columns.length > 0}
-        <div class="overflow-x-auto">
-          <Table.Root size="sm" striped stickyHeader>
-            <Table.Header>
-              <Table.Row>
-                {#each result.columns as col (col)}
-                  <Table.Head>{col}</Table.Head>
-                {/each}
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
-              {#each result.rows as row, rowIndex (`${result.time}-${rowIndex}`)}
+        {#if result.columns && result.rows && result.columns.length > 0}
+          <div class="overflow-x-auto p-1">
+            <Table.Root size="sm" striped stickyHeader variant="ghost">
+              <Table.Header>
                 <Table.Row>
-                  {#each row as cell, cellIndex (`${rowIndex}-${cellIndex}`)}
-                    <Table.Cell>{sqliteValueToDisplay(cell)}</Table.Cell>
+                  {#each result.columns as col (col)}
+                    <Table.Head>{col}</Table.Head>
                   {/each}
                 </Table.Row>
-              {/each}
-            </Table.Body>
-          </Table.Root>
-        </div>
-      {:else if ["write", "begin", "commit", "rollback"].includes(result.type)}
-        <p class="text-sm text-(--color-text-muted)">
-          Statement executed successfully with no rows returned.
-        </p>
-      {/if}
+              </Table.Header>
+              <Table.Body>
+                {#each result.rows as row, rowIndex (`${result.time}-${rowIndex}`)}
+                  <Table.Row>
+                    {#each row as cell, cellIndex (`${rowIndex}-${cellIndex}`)}
+                      <Table.Cell class="font-mono text-sm">
+                        {sqliteValueToDisplay(cell)}
+                      </Table.Cell>
+                    {/each}
+                  </Table.Row>
+                {/each}
+              </Table.Body>
+            </Table.Root>
+          </div>
+        {:else if ["write", "begin", "commit", "rollback"].includes(result.type) && !result.error}
+          <div class="p-8 text-center">
+            <p
+              class="text-sm font-semibold uppercase tracking-wider text-(--color-text-muted)"
+            >
+              Statement executed successfully
+            </p>
+            <p class="mt-1 text-xs text-(--color-text-muted)">
+              No rows returned
+            </p>
+          </div>
+        {/if}
+      </div>
     </Card>
   {/each}
 </div>
