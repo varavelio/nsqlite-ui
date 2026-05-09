@@ -19,6 +19,7 @@
     buildExplorerPreviewQuery,
     quoteSqliteIdentifier,
     readResultRowsToObjects,
+    type SqlitePrimitive,
     sqliteValueToDisplay,
     sqliteValueToPrimitive,
   } from "$lib/sqlite";
@@ -214,7 +215,6 @@
     schemaError = "";
 
     try {
-      const safeName = quoteSqliteIdentifier(selectedObjectName);
       const pragmaName = JSON.stringify(selectedObjectName);
       const metadataResults = await runQueries([
         `PRAGMA table_info(${pragmaName});`,
@@ -656,7 +656,7 @@
                     </Table.Cell>
                   </Table.Row>
                 {:else}
-                  {#each previewRows as row, rowIndex (`${currentPage}-${rowIndex}`)}
+                  {#each previewRows as row, rowIndex (`${pageIndex}-${rowIndex}`)}
                     <Table.Row>
                       {#each row as cell, cellIndex (`${rowIndex}-${cellIndex}`)}
                         <Table.Cell

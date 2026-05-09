@@ -14,29 +14,28 @@ test("quoteSqliteIdentifier escapes double quotes", () => {
   assert.equal(quoteSqliteIdentifier('users"archive'), '"users""archive"');
 });
 
-test("buildExplorerPreviewQuery orders by primary keys and clamps pagination", () => {
+test("buildExplorerPreviewQuery orders by primary keys and clamps limit", () => {
   assert.equal(
     buildExplorerPreviewQuery({
       objectName: 'users"archive',
       columnNames: ["id", "email"],
       primaryKeyColumns: ["tenant_id", "id"],
       limit: 1000,
-      offset: -15,
     }),
-    'SELECT * FROM "users""archive" ORDER BY "tenant_id", "id" LIMIT 200 OFFSET 0;',
+    'SELECT * FROM "users""archive" ORDER BY "tenant_id", "id" LIMIT 200;',
   );
 });
 
-test("buildExplorerPreviewQuery falls back to first column when there is no primary key", () => {
+test("buildExplorerPreviewQuery generates cursor clauses", () => {
   assert.equal(
     buildExplorerPreviewQuery({
       objectName: "audit_log",
       columnNames: ["created_at", "payload"],
       primaryKeyColumns: [],
       limit: 25,
-      offset: 50,
+      cursor: { created_at: "2023-01-01" },
     }),
-    'SELECT * FROM "audit_log" ORDER BY "created_at" LIMIT 25 OFFSET 50;',
+    'SELECT * FROM "audit_log" WHERE "created_at" > \'2023-01-01\' ORDER BY "created_at" LIMIT 25;',
   );
 });
 
