@@ -5,13 +5,11 @@
 <script lang="ts">
   import { Container } from "@varavel/ui";
   import { page } from "$app/state";
-  import Explorer from "../Explorer.svelte";
+  import Explorer from "./Explorer.svelte";
 
   let tableName = $derived(
     page.params.table ? decodeURIComponent(page.params.table) : "",
   );
 </script>
 
-<Container maxWidth="full" padded>
-  <Explorer initialTable={tableName} />
-</Container>
+<Explorer initialTable={tableName} />

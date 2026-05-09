@@ -2,7 +2,14 @@
   import "../app.css";
 
   import { Code, Database, LayoutDashboard, LogOut } from "@lucide/svelte";
-  import { Button, Nav, Skeleton, ThemePicker, UiProvider } from "@varavel/ui";
+  import {
+    Button,
+    Container,
+    Nav,
+    Skeleton,
+    ThemePicker,
+    UiProvider,
+  } from "@varavel/ui";
   import { Loader } from "@varavel/ui/brand";
   import { AppLayout } from "@varavel/ui/layouts";
   import { page } from "$app/state";
@@ -69,7 +76,7 @@
       <AppLayout
         primaryRegion="header"
         maxWidth="xl"
-        sidebarWidth="sm"
+        sidebarWidth="md"
         closeSidebarOnRouteChange={true}
       >
         {#snippet headerLeft()}
@@ -136,7 +143,9 @@
         {/snippet}
 
         {#snippet main()}
-          {@render children()}
+          <Container padded maxWidth="full" class="py-4">
+            {@render children()}
+          </Container>
         {/snippet}
       </AppLayout>
     </AuthWall>

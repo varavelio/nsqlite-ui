@@ -7,6 +7,4 @@
   import SqlQuery from "./SqlQuery.svelte";
 </script>
 
-<Container maxWidth="full" padded>
-  <SqlQuery />
-</Container>
+<SqlQuery />
