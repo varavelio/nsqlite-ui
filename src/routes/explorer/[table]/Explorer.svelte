@@ -340,74 +340,11 @@
   {/if}
 
   {#if selectedObjectName}
+    <h1 class="text-2xl font-bold tracking-tight">
+      {selectedObjectName}
+    </h1>
+
     <Bento.Grid>
-      <!-- HEADER CARD -->
-      <Bento.Item deskCols="12">
-        <Card padding="lg">
-          <div
-            class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
-          >
-            <div class="flex flex-col gap-1.5">
-              <div class="flex items-center gap-2">
-                <span
-                  class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
-                >
-                  Selected Table
-                </span>
-              </div>
-              <span class="text-2xl font-bold tracking-tight">
-                {selectedObjectName}
-              </span>
-            </div>
-
-            <div class="flex flex-wrap gap-3">
-              <Card
-                bg="100"
-                padding="sm"
-                class="flex flex-col gap-1 border border-base-400 min-w-[120px]"
-              >
-                <span
-                  class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
-                >
-                  Total Rows
-                </span>
-                <div class="flex items-center gap-2">
-                  <span class="text-lg font-mono font-semibold">
-                    {totalRows?.toLocaleString() ?? "—"}
-                  </span>
-                  {#if totalRows === null}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      class="h-6 px-2 text-xs"
-                      loading={countingRows}
-                      onclick={countTotalRows}
-                    >
-                      Count
-                    </Button>
-                  {/if}
-                </div>
-              </Card>
-              <Card
-                bg="100"
-                padding="sm"
-                class="flex flex-col gap-1 border border-base-400 min-w-[120px]"
-              >
-                <span
-                  class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
-                >
-                  Query Time
-                </span>
-                <span class="text-lg font-mono font-semibold">
-                  {totalTime.toFixed(4)}
-                  s
-                </span>
-              </Card>
-            </div>
-          </div>
-        </Card>
-      </Bento.Item>
-
       {#if schemaLoading}
         <Bento.Item deskCols="12">
           <Card padding="lg">
@@ -681,29 +618,46 @@
             </Table.Root>
           </div>
 
-          {#if pageIndex > 0 || hasNextPage}
+          {#if previewColumns.length > 0}
             <div
               class="border-t border-base-400 bg-base-100 p-4 flex items-center justify-between"
             >
-              <p class="text-xs text-(--color-text-muted)">{previewSummary}</p>
               <div class="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={pageIndex === 0}
-                  onclick={handlePrevPage}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={!hasNextPage}
-                  onclick={handleNextPage}
-                >
-                  Next
-                </Button>
+                <p class="text-xs text-(--color-text-muted)">
+                  {previewSummary}
+                </p>
+                {#if totalRows === null}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    class="h-6 px-2 text-xs"
+                    loading={countingRows}
+                    onclick={countTotalRows}
+                  >
+                    Count
+                  </Button>
+                {/if}
               </div>
+              {#if pageIndex > 0 || hasNextPage}
+                <div class="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={pageIndex === 0}
+                    onclick={handlePrevPage}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!hasNextPage}
+                    onclick={handleNextPage}
+                  >
+                    Next
+                  </Button>
+                </div>
+              {/if}
             </div>
           {/if}
         </Card>
