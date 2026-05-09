@@ -2,10 +2,11 @@
   import {
     Alert,
     Badge,
+    Bento,
     Button,
     Card,
     CodeBlock,
-    Heading,
+    Kbd,
     Label,
     Pagination,
     Select,
@@ -291,251 +292,368 @@
   });
 </script>
 
-<div class="flex flex-col gap-6">
+<div class="flex flex-col gap-5">
   {#if schemaError}
     <Alert color="error">{schemaError}</Alert>
   {/if}
 
   {#if selectedObjectName}
-    <Card padding="lg">
-      <div class="flex flex-col gap-4">
-        <div
-          class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between"
-        >
-          <div>
-            <div class="flex flex-wrap items-center gap-2">
-              <Heading level="3" size="md">{selectedObjectName}</Heading>
-              <Badge color="info" size="sm">table</Badge>
-            </div>
-            <p class="mt-1 text-sm text-(--color-text-muted)">
-              {columns.length} columns · {indexes.length} indexes · {foreignKeys.length}
-              foreign keys
-            </p>
-          </div>
-
+    <Bento.Grid>
+      <!-- HEADER CARD -->
+      <Bento.Item deskCols="12">
+        <Card padding="lg">
           <div
-            class="flex flex-wrap items-center gap-3 text-xs text-(--color-text-muted)"
+            class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
           >
-            <span>Total rows: {totalRows?.toLocaleString() ?? "—"}</span>
-            <span>Query time: {totalTime.toFixed(4)}s</span>
-          </div>
-        </div>
-
-        {#if schemaLoading}
-          <div class="flex flex-col gap-2">
-            <Skeleton class="h-4 w-48" />
-            <Skeleton class="h-32 w-full" />
-          </div>
-        {/if}
-
-        <div
-          class="grid grid-cols-1 gap-4 2xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]"
-        >
-          <Card padding="lg">
-            <div class="mb-3 flex items-center justify-between gap-3">
-              <Heading level="4" size="sm">Columns</Heading>
-              <span class="text-xs text-(--color-text-muted)">
-                PKs: {primaryKeyColumns.length > 0
-                  ? primaryKeyColumns.join(", ")
-                  : "None"}
+            <div class="flex flex-col gap-1.5">
+              <div class="flex items-center gap-2">
+                <span
+                  class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
+                >
+                  Selected Table
+                </span>
+              </div>
+              <span class="text-2xl font-bold tracking-tight">
+                {selectedObjectName}
               </span>
             </div>
 
-            <div class="overflow-x-auto">
-              <Table.Root size="sm" striped stickyHeader>
-                <Table.Header>
-                  <Table.Row>
-                    <Table.Head>Name</Table.Head>
-                    <Table.Head>Type</Table.Head>
-                    <Table.Head>Nullable</Table.Head>
-                    <Table.Head>Default</Table.Head>
-                    <Table.Head>PK</Table.Head>
-                  </Table.Row>
-                </Table.Header>
-                <Table.Body>
-                  {#each columns as column (column.name)}
-                    <Table.Row>
-                      <Table.Cell class="font-medium">
-                        {column.name}
-                      </Table.Cell>
-                      <Table.Cell>{column.type || "—"}</Table.Cell>
-                      <Table.Cell>
-                        {column.notnull === 1 ? "No" : "Yes"}
-                      </Table.Cell>
-                      <Table.Cell>{column.dflt_value ?? "—"}</Table.Cell>
-                      <Table.Cell>
-                        {column.pk ? `#${column.pk}` : "—"}
-                      </Table.Cell>
-                    </Table.Row>
-                  {:else}
-                    <Table.Row>
-                      <Table.Cell
-                        colspan={5}
-                        class="text-sm text-(--color-text-muted)"
-                      >
-                        No column metadata available.
-                      </Table.Cell>
-                    </Table.Row>
-                  {/each}
-                </Table.Body>
-              </Table.Root>
+            <div class="flex flex-wrap gap-3">
+              <Card
+                bg="100"
+                padding="sm"
+                class="flex flex-col gap-1 border border-base-400 min-w-[120px]"
+              >
+                <span
+                  class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
+                >
+                  Total Rows
+                </span>
+                <span class="text-lg font-mono font-semibold">
+                  {totalRows?.toLocaleString() ?? "—"}
+                </span>
+              </Card>
+              <Card
+                bg="100"
+                padding="sm"
+                class="flex flex-col gap-1 border border-base-400 min-w-[120px]"
+              >
+                <span
+                  class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
+                >
+                  Query Time
+                </span>
+                <span class="text-lg font-mono font-semibold">
+                  {totalTime.toFixed(4)}
+                  s
+                </span>
+              </Card>
             </div>
-          </Card>
-
-          <div class="flex flex-col gap-4">
-            <Card padding="lg">
-              <Heading level="4" size="sm">Indexes</Heading>
-              <div class="mt-3 flex flex-col gap-2">
-                {#each indexes as index (index.name)}
-                  <div
-                    class="rounded-xl border border-(--color-border-primary) p-3"
-                  >
-                    <div class="flex items-center justify-between gap-3">
-                      <span class="text-sm font-medium">{index.name}</span>
-                      <Badge
-                        color={index.unique === 1 ? "success" : "neutral"}
-                        size="sm"
-                      >
-                        {index.unique === 1 ? "unique" : "non-unique"}
-                      </Badge>
-                    </div>
-                    <p class="mt-1 text-xs text-(--color-text-muted)">
-                      origin: {index.origin ?? "—"} · partial: {index.partial ===
-                      1
-                        ? "yes"
-                        : "no"}
-                    </p>
-                  </div>
-                {:else}
-                  <p class="text-sm text-(--color-text-muted)">
-                    No indexes found.
-                  </p>
-                {/each}
-              </div>
-            </Card>
-
-            <Card padding="lg">
-              <Heading level="4" size="sm">Foreign keys</Heading>
-              <div class="mt-3 flex flex-col gap-2">
-                {#each foreignKeys as foreignKey (`${foreignKey.id}-${foreignKey.seq}`)}
-                  <div
-                    class="rounded-xl border border-(--color-border-primary) p-3 text-sm"
-                  >
-                    <p class="font-medium">
-                      {foreignKey.from ?? "?"} → {foreignKey.table ?? "?"}
-                      .{foreignKey.to ?? "?"}
-                    </p>
-                    <p class="mt-1 text-xs text-(--color-text-muted)">
-                      on update: {foreignKey.on_update ?? "—"} · on delete: {foreignKey.on_delete ??
-                        "—"}
-                      · match: {foreignKey.match ?? "—"}
-                    </p>
-                  </div>
-                {:else}
-                  <p class="text-sm text-(--color-text-muted)">
-                    No foreign keys found.
-                  </p>
-                {/each}
-              </div>
-            </Card>
-          </div>
-        </div>
-
-        <Card padding="lg">
-          <Heading level="4" size="sm">Definition SQL</Heading>
-          <div class="mt-3">
-            <CodeBlock
-              rawCode={objectDefinition ?? "Definition unavailable."}
-              title="SQL"
-              showDownload={false}
-              scrollX={true}
-              scrollY={false}
-            />
           </div>
         </Card>
-      </div>
-    </Card>
+      </Bento.Item>
 
-    <Card padding="lg">
-      <div class="flex flex-col gap-4">
-        <div
-          class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
-        >
-          <div>
-            <Heading level="4" size="sm">Preview rows</Heading>
-            <p class="mt-1 text-xs text-(--color-text-muted)">
-              {previewSummary}
-            </p>
+      {#if schemaLoading}
+        <Bento.Item deskCols="12">
+          <Card padding="lg">
+            <div class="flex flex-col gap-2">
+              <Skeleton class="h-4 w-48" />
+              <Skeleton class="h-32 w-full" />
+            </div>
+          </Card>
+        </Bento.Item>
+      {/if}
+
+      <!-- COLUMNS & INDEXES -->
+      <Bento.Item deskCols="8" deskRows="2">
+        <Card padding="none" class="h-full overflow-hidden flex flex-col">
+          <div
+            class="flex items-center justify-between border-b border-base-400 bg-base-100 p-4"
+          >
+            <div class="flex items-center gap-2">
+              <h3
+                class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
+              >
+                Columns
+              </h3>
+              <Badge variant="outline" color="neutral" size="sm">
+                {columns.length}
+              </Badge>
+            </div>
+            <div
+              class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
+            >
+              PKs: <span class="font-mono text-(--color-text)">
+                {primaryKeyColumns.length > 0 ? primaryKeyColumns.join(", ") : "None"}
+              </span>
+            </div>
           </div>
 
-          <div class="flex flex-wrap items-center gap-3">
-            <Label size="sm">Page size</Label>
-            <Select
-              items={pageSizeItems}
-              bind:value={selectPageSize}
-              size="sm"
-            />
-          </div>
-        </div>
-
-        <div class="overflow-x-auto">
-          <Table.Root size="sm" striped stickyHeader>
-            <Table.Header>
-              <Table.Row>
-                {#each previewColumns as column (column)}
-                  <Table.Head>{column}</Table.Head>
-                {/each}
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
-              {#if previewColumns.length === 0}
+          <div class="overflow-x-auto flex-1 p-1">
+            <Table.Root size="sm" striped stickyHeader variant="ghost">
+              <Table.Header>
                 <Table.Row>
-                  <Table.Cell
-                    colspan={1}
-                    class="text-sm text-(--color-text-muted)"
-                  >
-                    No preview data available.
-                  </Table.Cell>
+                  <Table.Head>Name</Table.Head>
+                  <Table.Head>Type</Table.Head>
+                  <Table.Head>Nullable</Table.Head>
+                  <Table.Head>Default</Table.Head>
+                  <Table.Head>PK</Table.Head>
                 </Table.Row>
-              {:else}
-                {#each previewRows as row, rowIndex (`${currentPage}-${rowIndex}`)}
+              </Table.Header>
+              <Table.Body>
+                {#each columns as column (column.name)}
                   <Table.Row>
-                    {#each row as cell, cellIndex (`${rowIndex}-${cellIndex}`)}
-                      <Table.Cell>
-                        {sqliteValueToDisplay(cell)}
-                      </Table.Cell>
-                    {/each}
+                    <Table.Cell class="font-medium font-mono text-sm">
+                      {column.name}
+                    </Table.Cell>
+                    <Table.Cell class="font-mono text-sm text-(--color-info)">
+                      {column.type || "—"}
+                    </Table.Cell>
+                    <Table.Cell>
+                      {column.notnull === 1 ? "No" : "Yes"}
+                    </Table.Cell>
+                    <Table.Cell class="font-mono text-sm">
+                      {column.dflt_value ?? "—"}
+                    </Table.Cell>
+                    <Table.Cell
+                      class="font-mono text-sm text-(--color-warning)"
+                    >
+                      {column.pk ? `#${column.pk}` : "—"}
+                    </Table.Cell>
                   </Table.Row>
                 {:else}
                   <Table.Row>
                     <Table.Cell
-                      colspan={previewColumns.length}
-                      class="text-sm text-(--color-text-muted)"
+                      colspan={5}
+                      class="text-center text-(--color-text-muted) py-8"
                     >
-                      No rows returned for this page.
+                      No column metadata available.
                     </Table.Cell>
                   </Table.Row>
                 {/each}
-              {/if}
-            </Table.Body>
-          </Table.Root>
-        </div>
+              </Table.Body>
+            </Table.Root>
+          </div>
+        </Card>
+      </Bento.Item>
 
-        {#if totalRows !== null && totalRows > 0}
-          <Pagination
-            count={totalRows}
-            page={currentPage}
-            perPage={pageSize}
-            onPageChange={handlePageChange}
-            showSummary={false}
-          />
-        {/if}
-      </div>
-    </Card>
+      <Bento.Item deskCols="4" deskRows="2">
+        <div class="flex flex-col gap-5 h-full">
+          <Card padding="none" class="flex-1 overflow-hidden flex flex-col">
+            <div
+              class="flex items-center justify-between border-b border-base-400 bg-base-100 p-4"
+            >
+              <h3
+                class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
+              >
+                Indexes
+              </h3>
+              <Badge variant="outline" color="neutral" size="sm">
+                {indexes.length}
+              </Badge>
+            </div>
+            <div class="p-4 flex-1 overflow-y-auto">
+              <div class="flex flex-col gap-3">
+                {#each indexes as index (index.name)}
+                  <div
+                    class="rounded-lg border border-base-400 bg-base-100 p-3"
+                  >
+                    <div class="flex items-center justify-between gap-3">
+                      <span class="text-sm font-mono font-medium truncate">
+                        {index.name}
+                      </span>
+                      <Badge
+                        color={index.unique === 1 ? "success" : "neutral"}
+                        variant="soft"
+                        size="sm"
+                        class="uppercase tracking-wider shrink-0"
+                      >
+                        {index.unique === 1 ? "unique" : "non-unique"}
+                      </Badge>
+                    </div>
+                    <p
+                      class="mt-2 text-xs text-(--color-text-muted) uppercase tracking-wider"
+                    >
+                      Origin: <span class="font-mono text-(--color-text)">
+                        {index.origin ?? "—"}
+                      </span>
+                      <span class="mx-2">•</span>
+                      Partial: <span class="font-mono text-(--color-text)">
+                        {index.partial === 1 ? "yes" : "no"}
+                      </span>
+                    </p>
+                  </div>
+                {:else}
+                  <p class="text-sm text-(--color-text-muted) text-center py-4">
+                    No indexes found.
+                  </p>
+                {/each}
+              </div>
+            </div>
+          </Card>
+
+          <Card padding="none" class="flex-1 overflow-hidden flex flex-col">
+            <div
+              class="flex items-center justify-between border-b border-base-400 bg-base-100 p-4"
+            >
+              <h3
+                class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
+              >
+                Foreign Keys
+              </h3>
+              <Badge variant="outline" color="neutral" size="sm">
+                {foreignKeys.length}
+              </Badge>
+            </div>
+            <div class="p-4 flex-1 overflow-y-auto">
+              <div class="flex flex-col gap-3">
+                {#each foreignKeys as foreignKey (`${foreignKey.id}-${foreignKey.seq}`)}
+                  <div
+                    class="rounded-lg border border-base-400 bg-base-100 p-3"
+                  >
+                    <p class="font-mono text-sm font-medium">
+                      {foreignKey.from ?? "?"}
+                      <span class="text-(--color-text-muted)">→</span>
+                      {foreignKey.table ?? "?"}
+                      .{foreignKey.to ?? "?"}
+                    </p>
+                    <p
+                      class="mt-2 text-[10px] text-(--color-text-muted) uppercase tracking-wider"
+                    >
+                      Update: <span class="font-mono text-(--color-text)">
+                        {foreignKey.on_update ?? "—"}
+                      </span>
+                      <span class="mx-2">•</span>
+                      Delete: <span class="font-mono text-(--color-text)">
+                        {foreignKey.on_delete ?? "—"}
+                      </span>
+                    </p>
+                  </div>
+                {:else}
+                  <p class="text-sm text-(--color-text-muted) text-center py-4">
+                    No foreign keys found.
+                  </p>
+                {/each}
+              </div>
+            </div>
+          </Card>
+        </div>
+      </Bento.Item>
+
+      <Bento.Item deskCols="12">
+        <CodeBlock
+          rawCode={objectDefinition ?? "Definition unavailable."}
+          title="SQL Definition"
+          showDownload={false}
+          scrollX={true}
+          scrollY={false}
+        />
+      </Bento.Item>
+
+      <Bento.Item deskCols="12">
+        <Card padding="none" class="overflow-hidden">
+          <div
+            class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-base-400 bg-base-100 p-4"
+          >
+            <div class="flex flex-col gap-1">
+              <h3
+                class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
+              >
+                Preview Data
+              </h3>
+              <p class="text-xs text-(--color-text-muted)">
+                {previewSummary}
+              </p>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <span
+                class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
+              >
+                Page size
+              </span>
+              <Select
+                items={pageSizeItems}
+                bind:value={selectPageSize}
+                size="sm"
+                class="w-24"
+              />
+            </div>
+          </div>
+
+          <div class="overflow-x-auto p-1">
+            <Table.Root size="sm" striped stickyHeader variant="ghost">
+              <Table.Header>
+                <Table.Row>
+                  {#each previewColumns as column (column)}
+                    <Table.Head>{column}</Table.Head>
+                  {/each}
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {#if previewColumns.length === 0}
+                  <Table.Row>
+                    <Table.Cell
+                      colspan={1}
+                      class="text-center text-(--color-text-muted) py-8"
+                    >
+                      No preview data available.
+                    </Table.Cell>
+                  </Table.Row>
+                {:else}
+                  {#each previewRows as row, rowIndex (`${currentPage}-${rowIndex}`)}
+                    <Table.Row>
+                      {#each row as cell, cellIndex (`${rowIndex}-${cellIndex}`)}
+                        <Table.Cell
+                          class="font-mono text-sm max-w-[300px] truncate"
+                        >
+                          {sqliteValueToDisplay(cell)}
+                        </Table.Cell>
+                      {/each}
+                    </Table.Row>
+                  {:else}
+                    <Table.Row>
+                      <Table.Cell
+                        colspan={previewColumns.length}
+                        class="text-center text-(--color-text-muted) py-8"
+                      >
+                        No rows returned for this page.
+                      </Table.Cell>
+                    </Table.Row>
+                  {/each}
+                {/if}
+              </Table.Body>
+            </Table.Root>
+          </div>
+
+          {#if totalRows !== null && totalRows > 0}
+            <div
+              class="border-t border-base-400 bg-base-100 p-4 flex justify-center"
+            >
+              <Pagination
+                count={totalRows}
+                page={currentPage}
+                perPage={pageSize}
+                onPageChange={handlePageChange}
+                showSummary={false}
+              />
+            </div>
+          {/if}
+        </Card>
+      </Bento.Item>
+    </Bento.Grid>
   {:else}
-    <Card padding="lg">
+    <Card padding="lg" class="flex flex-col items-center justify-center py-20">
+      <div class="flex items-center gap-2 mb-2">
+        <div class="h-2 w-2 rounded-full bg-(--color-info)"></div>
+        <span
+          class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
+        >
+          Table Explorer
+        </span>
+      </div>
       <p class="text-sm text-(--color-text-muted)">
-        Select a table or view from the sidebar to inspect it.
+        Select a table or view from the sidebar to inspect its schema and data.
       </p>
     </Card>
   {/if}
