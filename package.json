@@ -2,7 +2,7 @@
   "name": "nsqliteui",
   "type": "module",
   "scripts": {
-    "ci": "npm install && npm run format && npm run lint && npm run build",
+    "ci": "npm install && npm run format && npm run lint && npm run test && npm run build",
     "dev": "vite dev --host 0.0.0.0",
     "build": "npm run codegen && vite build",
     "codegen": "vdl generate ./schema/vdl.config.vdl",
@@ -13,7 +13,8 @@
     "lint": "npm run lint:dprint && npm run lint:biome && npm run lint:svelte",
     "lint:dprint": "dprint check --config ./dprint.json --log-level warn",
     "lint:biome": "biome check --config-path ./biome.json --log-level warn .",
-    "lint:svelte": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+    "lint:svelte": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "test": "node --test --experimental-strip-types src/lib/sqlite.test.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.14",
