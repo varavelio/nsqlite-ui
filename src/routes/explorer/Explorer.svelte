@@ -6,7 +6,6 @@
     Card,
     CodeBlock,
     Heading,
-    Input,
     Label,
     Pagination,
     Select,
@@ -22,13 +21,6 @@
     sqliteValueToDisplay,
   } from "$lib/sqlite";
   import { store } from "$lib/store.svelte";
-
-  type ExplorerObject = {
-    name: string;
-    type: string;
-    sql: string | null;
-    tableName: string | null;
-  };
 
   type ColumnInfo = {
     cid: number | null;
@@ -58,17 +50,24 @@
     match: string | null;
   };
 
+  let { initialTable = "" }: { initialTable?: string } = $props();
+
   const pageSizeOptions = [10, 25, 50, 100];
   const pageSizeItems = pageSizeOptions.map((o) => ({
     value: String(o),
     label: String(o),
   }));
 
-  let objectFilter = $state("");
-  let objects = $state<ExplorerObject[]>([]);
-  let objectsLoading = $state(true);
-  let objectsError = $state("");
   let selectedObjectName = $state("");
+  $effect(() => {
+    if (initialTable !== selectedObjectName) {
+      selectedObjectName = initialTable;
+      currentPage = 1;
+      if (store.client && initialTable) {
+        void loadSelectedObject();
+      }
+    }
+  });
 
   let schemaLoading = $state(false);
   let schemaError = $state("");
@@ -83,25 +82,18 @@
   let selectPageSize = $state("25");
   let currentPage = $state(1);
   let schemaRequestId = 0;
+  let objectDefinition = $state<string | null>(null);
 
   $effect(() => {
     if (selectPageSize !== String(pageSize)) {
-      handlePageSizeChange(selectPageSize);
+      const nextValue = Number(selectPageSize);
+      if (Number.isFinite(nextValue) && nextValue > 0) {
+        pageSize = nextValue;
+        currentPage = 1;
+        void loadSelectedObject();
+      }
     }
   });
-
-  let filteredObjects = $derived.by(() => {
-    const filter = objectFilter.trim().toLowerCase();
-    if (!filter) return objects;
-    return objects.filter((item) => {
-      const haystack = `${item.name} ${item.type}`.toLowerCase();
-      return haystack.includes(filter);
-    });
-  });
-
-  let selectedObject = $derived(
-    objects.find((item) => item.name === selectedObjectName) ?? null,
-  );
 
   let primaryKeyColumns = $derived.by(() =>
     columns
@@ -126,7 +118,6 @@
       : Math.min(totalRows, (currentPage - 1) * pageSize + previewRows.length),
   );
 
-  let objectDefinition = $derived(selectedObject?.sql ?? null);
   let previewSummary = $derived(
     `Showing ${showingFrom}-${showingTo} of ${totalRows?.toLocaleString() ?? "-"} rows.`,
   );
@@ -140,15 +131,6 @@
     });
     totalTime = output.time;
     return output.results;
-  }
-
-  function parseObjects(result: QueryResult): ExplorerObject[] {
-    return readResultRowsToObjects(result).map((row) => ({
-      name: String(row.name ?? ""),
-      type: String(row.type ?? ""),
-      sql: row.sql === null ? null : String(row.sql),
-      tableName: row.tbl_name === null ? null : String(row.tbl_name),
-    }));
   }
 
   function parseColumns(result: QueryResult): ColumnInfo[] {
@@ -191,43 +173,21 @@
     return typeof value === "number" ? value : null;
   }
 
-  async function loadObjects() {
-    objectsLoading = true;
-    objectsError = "";
-
-    try {
-      const [result] = await runQueries([
-        `SELECT name, type, tbl_name, sql\n         FROM sqlite_master\n         WHERE type IN ('table', 'view')\n           AND name NOT LIKE 'sqlite_%'\n         ORDER BY CASE WHEN type = 'table' THEN 0 ELSE 1 END, name;`,
-      ]);
-
-      if (result?.error) {
-        throw new Error(result.error);
-      }
-
-      objects = parseObjects(result);
-
-      if (!objects.some((item) => item.name === selectedObjectName)) {
-        selectedObjectName = objects[0]?.name ?? "";
-      }
-
-      await loadSelectedObject();
-    } catch (error) {
-      objectsError = error instanceof Error ? error.message : String(error);
-      objects = [];
-      selectedObjectName = "";
-    } finally {
-      objectsLoading = false;
-    }
+  function parseSql(result: QueryResult): string | null {
+    const rows = readResultRowsToObjects(result);
+    const value = rows[0]?.sql;
+    return value === null ? null : String(value ?? "");
   }
 
   async function loadSelectedObject() {
-    if (!selectedObject) {
+    if (!selectedObjectName) {
       columns = [];
       indexes = [];
       foreignKeys = [];
       previewColumns = [];
       previewRows = [];
       totalRows = null;
+      objectDefinition = null;
       schemaError = "";
       schemaLoading = false;
       return;
@@ -238,20 +198,26 @@
     schemaError = "";
 
     try {
-      const safeName = quoteSqliteIdentifier(selectedObject.name);
-      const pragmaName = JSON.stringify(selectedObject.name);
+      const safeName = quoteSqliteIdentifier(selectedObjectName);
+      const pragmaName = JSON.stringify(selectedObjectName);
       const metadataResults = await runQueries([
         `PRAGMA table_info(${pragmaName});`,
         `PRAGMA index_list(${pragmaName});`,
         `PRAGMA foreign_key_list(${pragmaName});`,
         `SELECT COUNT(*) AS total_rows FROM ${safeName};`,
+        `SELECT sql FROM sqlite_master WHERE name = ${pragmaName};`,
       ]);
       const metadataTime = totalTime;
 
       if (requestId !== schemaRequestId) return;
 
-      const [columnsResult, indexesResult, foreignKeysResult, countResult] =
-        metadataResults;
+      const [
+        columnsResult,
+        indexesResult,
+        foreignKeysResult,
+        countResult,
+        sqlResult,
+      ] = metadataResults;
 
       const metadataError = metadataResults.find(
         (result) => result?.error,
@@ -269,7 +235,7 @@
         .map((column) => column.name);
 
       const previewQuery = buildExplorerPreviewQuery({
-        objectName: selectedObject.name,
+        objectName: selectedObjectName,
         columnNames: nextColumns.map((column) => column.name),
         primaryKeyColumns: nextPrimaryKeyColumns,
         limit: pageSize,
@@ -289,6 +255,7 @@
       indexes = nextIndexes;
       foreignKeys = nextForeignKeys;
       totalRows = parseCount(countResult);
+      objectDefinition = parseSql(sqlResult);
       previewColumns = previewResult?.columns ?? [];
       previewRows = previewResult?.rows ?? [];
       totalTime = metadataTime + previewTime;
@@ -299,6 +266,7 @@
       columns = [];
       indexes = [];
       foreignKeys = [];
+      objectDefinition = null;
       previewColumns = [];
       previewRows = [];
       totalRows = null;
@@ -309,363 +277,266 @@
     }
   }
 
-  function selectObject(name: string) {
-    if (selectedObjectName === name) return;
-    selectedObjectName = name;
-    currentPage = 1;
-    void loadSelectedObject();
-  }
-
-  function handlePageSizeChange(value: string) {
-    const nextValue = Number(value);
-    if (!Number.isFinite(nextValue) || nextValue <= 0) return;
-    pageSize = nextValue;
-    currentPage = 1;
-    void loadSelectedObject();
-  }
-
   function handlePageChange(pageNumber: number) {
     currentPage = pageNumber;
     void loadSelectedObject();
   }
 
   onMount(() => {
-    if (store.client) {
-      void loadObjects();
+    if (store.client && selectedObjectName) {
+      void loadSelectedObject();
     } else {
-      objects = [];
-      selectedObjectName = "";
-      objectsLoading = false;
+      schemaLoading = false;
     }
   });
 </script>
 
-<div class="flex">
-  <div class="flex flex-col gap-4 p-4">
-    <div>
-      <Heading level="3" size="sm">Objects</Heading>
-      <p class="mt-1 text-xs text-(--color-text-muted)">
-        Browse available tables and views from sqlite_master.
-      </p>
-    </div>
+<div class="flex flex-col gap-6">
+  {#if schemaError}
+    <Alert color="error">{schemaError}</Alert>
+  {/if}
 
-    <div class="flex flex-col gap-2">
-      <Label for="explorer-filter" size="sm">Filter</Label>
-      <Input
-        id="explorer-filter"
-        bind:value={objectFilter}
-        placeholder="Search tables or views"
-      />
-    </div>
-
-    <div class="max-h-[60dvh] overflow-y-auto">
-      {#if objectsLoading}
-        <div class="flex flex-col gap-2">
-          {#each { length: 6 } as _, i (i)}
-            <Skeleton class="h-10 w-full" />
-          {/each}
-        </div>
-      {:else}
-        <div class="flex flex-col gap-1">
-          {#each filteredObjects as item (item.name)}
-            <Button
-              variant="ghost"
-              alignContent="left"
-              active={selectedObjectName === item.name}
-              onclick={() => selectObject(item.name)}
-              class="justify-between"
-            >
-              <span class="truncate text-sm font-medium">{item.name}</span>
-              <Badge
-                color={item.type === "view" ? "neutral" : "info"}
-                size="sm"
-              >
-                {item.type}
-              </Badge>
-            </Button>
-          {:else}
-            <p class="px-3 py-3 text-sm text-(--color-text-muted)">
-              No matching objects.
-            </p>
-          {/each}
-        </div>
-      {/if}
-    </div>
-  </div>
-
-  <div class="flex flex-col gap-6">
-    <div>
-      <Heading level="2" size="lg">Database explorer</Heading>
-      <p class="mt-1 text-sm text-(--color-text-muted)">
-        Inspect tables and views, review schema metadata, and page through
-        read-only previews.
-      </p>
-    </div>
-
-    {#if objectsError}
-      <Alert color="error">{objectsError}</Alert>
-    {/if}
-
-    {#if schemaError}
-      <Alert color="error">{schemaError}</Alert>
-    {/if}
-
-    <div class="grid grid-cols-1 gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-      <div class="flex min-w-0 flex-col gap-6">
-        {#if selectedObject}
-          <Card padding="lg">
-            <div class="flex flex-col gap-4">
-              <div
-                class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between"
-              >
-                <div>
-                  <div class="flex flex-wrap items-center gap-2">
-                    <Heading level="3" size="md">{selectedObject.name}</Heading>
-                    <Badge
-                      color={selectedObject.type === "view" ? "neutral" : "info"}
-                      size="sm"
-                    >
-                      {selectedObject.type}
-                    </Badge>
-                  </div>
-                  <p class="mt-1 text-sm text-(--color-text-muted)">
-                    {columns.length} columns · {indexes.length} indexes · {foreignKeys.length}
-                    foreign keys
-                  </p>
-                </div>
-
-                <div
-                  class="flex flex-wrap items-center gap-3 text-xs text-(--color-text-muted)"
-                >
-                  <span>Total rows: {totalRows?.toLocaleString() ?? "—"}</span>
-                  <span>Query time: {totalTime.toFixed(4)}s</span>
-                </div>
-              </div>
-
-              {#if schemaLoading}
-                <div class="flex flex-col gap-2">
-                  <Skeleton class="h-4 w-48" />
-                  <Skeleton class="h-32 w-full" />
-                </div>
-              {/if}
-
-              <div
-                class="grid grid-cols-1 gap-4 2xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]"
-              >
-                <Card padding="lg">
-                  <div class="mb-3 flex items-center justify-between gap-3">
-                    <Heading level="4" size="sm">Columns</Heading>
-                    <span class="text-xs text-(--color-text-muted)">
-                      PKs: {primaryKeyColumns.length > 0
-                      ? primaryKeyColumns.join(", ")
-                      : "None"}
-                    </span>
-                  </div>
-
-                  <div class="overflow-x-auto">
-                    <Table.Root size="sm" striped stickyHeader>
-                      <Table.Header>
-                        <Table.Row>
-                          <Table.Head>Name</Table.Head>
-                          <Table.Head>Type</Table.Head>
-                          <Table.Head>Nullable</Table.Head>
-                          <Table.Head>Default</Table.Head>
-                          <Table.Head>PK</Table.Head>
-                        </Table.Row>
-                      </Table.Header>
-                      <Table.Body>
-                        {#each columns as column (column.name)}
-                          <Table.Row>
-                            <Table.Cell class="font-medium">
-                              {column.name}
-                            </Table.Cell>
-                            <Table.Cell>{column.type || "—"}</Table.Cell>
-                            <Table.Cell>
-                              {column.notnull === 1 ? "No" : "Yes"}
-                            </Table.Cell>
-                            <Table.Cell>{column.dflt_value ?? "—"}</Table.Cell>
-                            <Table.Cell>
-                              {column.pk ? `#${column.pk}` : "—"}
-                            </Table.Cell>
-                          </Table.Row>
-                        {:else}
-                          <Table.Row>
-                            <Table.Cell
-                              colspan={5}
-                              class="text-sm text-(--color-text-muted)"
-                            >
-                              No column metadata available.
-                            </Table.Cell>
-                          </Table.Row>
-                        {/each}
-                      </Table.Body>
-                    </Table.Root>
-                  </div>
-                </Card>
-
-                <div class="flex flex-col gap-4">
-                  <Card padding="lg">
-                    <Heading level="4" size="sm">Indexes</Heading>
-                    <div class="mt-3 flex flex-col gap-2">
-                      {#each indexes as index (index.name)}
-                        <div
-                          class="rounded-xl border border-(--color-border-primary) p-3"
-                        >
-                          <div class="flex items-center justify-between gap-3">
-                            <span class="text-sm font-medium">
-                              {index.name}
-                            </span>
-                            <Badge
-                              color={index.unique === 1 ? "success" : "neutral"}
-                              size="sm"
-                            >
-                              {index.unique === 1 ? "unique" : "non-unique"}
-                            </Badge>
-                          </div>
-                          <p class="mt-1 text-xs text-(--color-text-muted)">
-                            origin: {index.origin ?? "—"} · partial: {index.partial ===
-                          1
-                            ? "yes"
-                            : "no"}
-                          </p>
-                        </div>
-                      {:else}
-                        <p class="text-sm text-(--color-text-muted)">
-                          No indexes found.
-                        </p>
-                      {/each}
-                    </div>
-                  </Card>
-
-                  <Card padding="lg">
-                    <Heading level="4" size="sm">Foreign keys</Heading>
-                    <div class="mt-3 flex flex-col gap-2">
-                      {#each foreignKeys as foreignKey (`${foreignKey.id}-${foreignKey.seq}`)}
-                        <div
-                          class="rounded-xl border border-(--color-border-primary) p-3 text-sm"
-                        >
-                          <p class="font-medium">
-                            {foreignKey.from ?? "?"} → {foreignKey.table ?? "?"}
-                            .{foreignKey.to ?? "?"}
-                          </p>
-                          <p class="mt-1 text-xs text-(--color-text-muted)">
-                            on update: {foreignKey.on_update ?? "—"} · on
-                            delete: {foreignKey.on_delete ??
-                            "—"}
-                            · match: {foreignKey.match ?? "—"}
-                          </p>
-                        </div>
-                      {:else}
-                        <p class="text-sm text-(--color-text-muted)">
-                          No foreign keys found.
-                        </p>
-                      {/each}
-                    </div>
-                  </Card>
-                </div>
-              </div>
-
-              <Card padding="lg">
-                <Heading level="4" size="sm">Definition SQL</Heading>
-                <div class="mt-3">
-                  <CodeBlock
-                    rawCode={objectDefinition ?? "Definition unavailable."}
-                    title="SQL"
-                    showDownload={false}
-                    scrollX={true}
-                    scrollY={false}
-                  />
-                </div>
-              </Card>
+  {#if selectedObjectName}
+    <Card padding="lg">
+      <div class="flex flex-col gap-4">
+        <div
+          class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between"
+        >
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <Heading level="3" size="md">{selectedObjectName}</Heading>
+              <Badge color="info" size="sm">table</Badge>
             </div>
-          </Card>
+            <p class="mt-1 text-sm text-(--color-text-muted)">
+              {columns.length} columns · {indexes.length} indexes · {foreignKeys.length}
+              foreign keys
+            </p>
+          </div>
 
+          <div
+            class="flex flex-wrap items-center gap-3 text-xs text-(--color-text-muted)"
+          >
+            <span>Total rows: {totalRows?.toLocaleString() ?? "—"}</span>
+            <span>Query time: {totalTime.toFixed(4)}s</span>
+          </div>
+        </div>
+
+        {#if schemaLoading}
+          <div class="flex flex-col gap-2">
+            <Skeleton class="h-4 w-48" />
+            <Skeleton class="h-32 w-full" />
+          </div>
+        {/if}
+
+        <div
+          class="grid grid-cols-1 gap-4 2xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]"
+        >
           <Card padding="lg">
-            <div class="flex flex-col gap-4">
-              <div
-                class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
-              >
-                <div>
-                  <Heading level="4" size="sm">Preview rows</Heading>
-                  <p class="mt-1 text-xs text-(--color-text-muted)">
-                    {previewSummary}
-                  </p>
-                </div>
+            <div class="mb-3 flex items-center justify-between gap-3">
+              <Heading level="4" size="sm">Columns</Heading>
+              <span class="text-xs text-(--color-text-muted)">
+                PKs: {primaryKeyColumns.length > 0
+                  ? primaryKeyColumns.join(", ")
+                  : "None"}
+              </span>
+            </div>
 
-                <div class="flex flex-wrap items-center gap-3">
-                  <Label size="sm">Page size</Label>
-                  <Select
-                    items={pageSizeItems}
-                    bind:value={selectPageSize}
-                    size="sm"
-                  />
-                </div>
-              </div>
-
-              <div class="overflow-x-auto">
-                <Table.Root size="sm" striped stickyHeader>
-                  <Table.Header>
+            <div class="overflow-x-auto">
+              <Table.Root size="sm" striped stickyHeader>
+                <Table.Header>
+                  <Table.Row>
+                    <Table.Head>Name</Table.Head>
+                    <Table.Head>Type</Table.Head>
+                    <Table.Head>Nullable</Table.Head>
+                    <Table.Head>Default</Table.Head>
+                    <Table.Head>PK</Table.Head>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {#each columns as column (column.name)}
                     <Table.Row>
-                      {#each previewColumns as column (column)}
-                        <Table.Head>{column}</Table.Head>
-                      {/each}
+                      <Table.Cell class="font-medium">
+                        {column.name}
+                      </Table.Cell>
+                      <Table.Cell>{column.type || "—"}</Table.Cell>
+                      <Table.Cell>
+                        {column.notnull === 1 ? "No" : "Yes"}
+                      </Table.Cell>
+                      <Table.Cell>{column.dflt_value ?? "—"}</Table.Cell>
+                      <Table.Cell>
+                        {column.pk ? `#${column.pk}` : "—"}
+                      </Table.Cell>
                     </Table.Row>
-                  </Table.Header>
-                  <Table.Body>
-                    {#if previewColumns.length === 0}
-                      <Table.Row>
-                        <Table.Cell
-                          colspan={1}
-                          class="text-sm text-(--color-text-muted)"
-                        >
-                          No preview data available.
-                        </Table.Cell>
-                      </Table.Row>
-                    {:else}
-                      {#each previewRows as row, rowIndex (`${currentPage}-${rowIndex}`)}
-                        <Table.Row>
-                          {#each row as cell, cellIndex (`${rowIndex}-${cellIndex}`)}
-                            <Table.Cell>
-                              {sqliteValueToDisplay(cell)}
-                            </Table.Cell>
-                          {/each}
-                        </Table.Row>
-                      {:else}
-                        <Table.Row>
-                          <Table.Cell
-                            colspan={previewColumns.length}
-                            class="text-sm text-(--color-text-muted)"
-                          >
-                            No rows returned for this page.
-                          </Table.Cell>
-                        </Table.Row>
-                      {/each}
-                    {/if}
-                  </Table.Body>
-                </Table.Root>
-              </div>
-
-              {#if totalRows !== null && totalRows > 0}
-                <Pagination
-                  count={totalRows}
-                  page={currentPage}
-                  perPage={pageSize}
-                  onPageChange={handlePageChange}
-                  showSummary={false}
-                />
-              {/if}
+                  {:else}
+                    <Table.Row>
+                      <Table.Cell
+                        colspan={5}
+                        class="text-sm text-(--color-text-muted)"
+                      >
+                        No column metadata available.
+                      </Table.Cell>
+                    </Table.Row>
+                  {/each}
+                </Table.Body>
+              </Table.Root>
             </div>
           </Card>
-        {:else}
-          <Card padding="lg">
-            <p class="text-sm text-(--color-text-muted)">
-              {objectsLoading
-              ? "Loading database objects..."
-              : "Select a table or view to inspect it."}
+
+          <div class="flex flex-col gap-4">
+            <Card padding="lg">
+              <Heading level="4" size="sm">Indexes</Heading>
+              <div class="mt-3 flex flex-col gap-2">
+                {#each indexes as index (index.name)}
+                  <div
+                    class="rounded-xl border border-(--color-border-primary) p-3"
+                  >
+                    <div class="flex items-center justify-between gap-3">
+                      <span class="text-sm font-medium">{index.name}</span>
+                      <Badge
+                        color={index.unique === 1 ? "success" : "neutral"}
+                        size="sm"
+                      >
+                        {index.unique === 1 ? "unique" : "non-unique"}
+                      </Badge>
+                    </div>
+                    <p class="mt-1 text-xs text-(--color-text-muted)">
+                      origin: {index.origin ?? "—"} · partial: {index.partial ===
+                      1
+                        ? "yes"
+                        : "no"}
+                    </p>
+                  </div>
+                {:else}
+                  <p class="text-sm text-(--color-text-muted)">
+                    No indexes found.
+                  </p>
+                {/each}
+              </div>
+            </Card>
+
+            <Card padding="lg">
+              <Heading level="4" size="sm">Foreign keys</Heading>
+              <div class="mt-3 flex flex-col gap-2">
+                {#each foreignKeys as foreignKey (`${foreignKey.id}-${foreignKey.seq}`)}
+                  <div
+                    class="rounded-xl border border-(--color-border-primary) p-3 text-sm"
+                  >
+                    <p class="font-medium">
+                      {foreignKey.from ?? "?"} → {foreignKey.table ?? "?"}
+                      .{foreignKey.to ?? "?"}
+                    </p>
+                    <p class="mt-1 text-xs text-(--color-text-muted)">
+                      on update: {foreignKey.on_update ?? "—"} · on delete: {foreignKey.on_delete ??
+                        "—"}
+                      · match: {foreignKey.match ?? "—"}
+                    </p>
+                  </div>
+                {:else}
+                  <p class="text-sm text-(--color-text-muted)">
+                    No foreign keys found.
+                  </p>
+                {/each}
+              </div>
+            </Card>
+          </div>
+        </div>
+
+        <Card padding="lg">
+          <Heading level="4" size="sm">Definition SQL</Heading>
+          <div class="mt-3">
+            <CodeBlock
+              rawCode={objectDefinition ?? "Definition unavailable."}
+              title="SQL"
+              showDownload={false}
+              scrollX={true}
+              scrollY={false}
+            />
+          </div>
+        </Card>
+      </div>
+    </Card>
+
+    <Card padding="lg">
+      <div class="flex flex-col gap-4">
+        <div
+          class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+        >
+          <div>
+            <Heading level="4" size="sm">Preview rows</Heading>
+            <p class="mt-1 text-xs text-(--color-text-muted)">
+              {previewSummary}
             </p>
-          </Card>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <Label size="sm">Page size</Label>
+            <Select
+              items={pageSizeItems}
+              bind:value={selectPageSize}
+              size="sm"
+            />
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <Table.Root size="sm" striped stickyHeader>
+            <Table.Header>
+              <Table.Row>
+                {#each previewColumns as column (column)}
+                  <Table.Head>{column}</Table.Head>
+                {/each}
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {#if previewColumns.length === 0}
+                <Table.Row>
+                  <Table.Cell
+                    colspan={1}
+                    class="text-sm text-(--color-text-muted)"
+                  >
+                    No preview data available.
+                  </Table.Cell>
+                </Table.Row>
+              {:else}
+                {#each previewRows as row, rowIndex (`${currentPage}-${rowIndex}`)}
+                  <Table.Row>
+                    {#each row as cell, cellIndex (`${rowIndex}-${cellIndex}`)}
+                      <Table.Cell>
+                        {sqliteValueToDisplay(cell)}
+                      </Table.Cell>
+                    {/each}
+                  </Table.Row>
+                {:else}
+                  <Table.Row>
+                    <Table.Cell
+                      colspan={previewColumns.length}
+                      class="text-sm text-(--color-text-muted)"
+                    >
+                      No rows returned for this page.
+                    </Table.Cell>
+                  </Table.Row>
+                {/each}
+              {/if}
+            </Table.Body>
+          </Table.Root>
+        </div>
+
+        {#if totalRows !== null && totalRows > 0}
+          <Pagination
+            count={totalRows}
+            page={currentPage}
+            perPage={pageSize}
+            onPageChange={handlePageChange}
+            showSummary={false}
+          />
         {/if}
       </div>
-    </div>
-  </div>
+    </Card>
+  {:else}
+    <Card padding="lg">
+      <p class="text-sm text-(--color-text-muted)">
+        Select a table or view from the sidebar to inspect it.
+      </p>
+    </Card>
+  {/if}
 </div>

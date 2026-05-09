@@ -2,7 +2,7 @@
   import "../app.css";
 
   import { Code, Database, LayoutDashboard, LogOut } from "@lucide/svelte";
-  import { Button, Nav, ThemePicker, UiProvider } from "@varavel/ui";
+  import { Button, Nav, Skeleton, ThemePicker, UiProvider } from "@varavel/ui";
   import { Loader } from "@varavel/ui/brand";
   import { AppLayout } from "@varavel/ui/layouts";
   import { page } from "$app/state";
@@ -13,6 +13,46 @@
 
   let initialized = $derived(store.loaded);
   let pathname = $derived(page.url.pathname);
+
+  let dbObjects = $state<{ name: string; type: string }[]>([]);
+  let dbObjectsLoading = $state(false);
+
+  async function loadDbObjects() {
+    if (!store.client) {
+      dbObjects = [];
+      return;
+    }
+    dbObjectsLoading = true;
+    try {
+      const output = await store.client.procs.databaseQuery().execute({
+        queries: [
+          {
+            query: `SELECT name, type FROM sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%' ORDER BY CASE WHEN type = 'table' THEN 0 ELSE 1 END, name;`,
+          },
+        ],
+      });
+      const result = output.results[0];
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      dbObjects = (result.rows ?? []).map((row) => ({
+        name: String(row[0]?.text ?? row[0]?.integer ?? ""),
+        type: String(row[1]?.text ?? row[1]?.integer ?? ""),
+      }));
+    } catch {
+      dbObjects = [];
+    } finally {
+      dbObjectsLoading = false;
+    }
+  }
+
+  $effect(() => {
+    if (store.client) {
+      void loadDbObjects();
+    } else {
+      dbObjects = [];
+    }
+  });
 
   function handleLogout() {
     store.logout();
@@ -71,12 +111,27 @@
               icon={Code}
               active={pathname === "/query"}
             />
-            <Nav.Item
-              href="/explorer"
-              label="Explorer"
-              icon={Database}
-              active={pathname === "/explorer"}
-            />
+            <Nav.Group label="Explorer" icon={Database} open={true}>
+              {#if dbObjectsLoading}
+                <div class="flex flex-col gap-2 px-2 py-1">
+                  {#each { length: 5 } as _, i (i)}
+                    <Skeleton class="h-8 w-full" />
+                  {/each}
+                </div>
+              {:else}
+                {#each dbObjects as obj}
+                  <Nav.Item
+                    href={`/explorer/${encodeURIComponent(obj.name)}`}
+                    label={obj.name}
+                    active={pathname === `/explorer/${encodeURIComponent(obj.name)}`}
+                  />
+                {:else}
+                  <p class="px-3 py-2 text-xs text-(--color-text-muted)">
+                    No tables or views found.
+                  </p>
+                {/each}
+              {/if}
+            </Nav.Group>
           </Nav.Root>
         {/snippet}
 
