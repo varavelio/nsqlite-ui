@@ -104,10 +104,20 @@
     <Bento.Grid>
       <Bento.Item deskCols="3">
         <Card padding="lg" class="h-full">
-          <div class="flex flex-col gap-1">
-            <span class="text-xs text-(--color-text-muted)">Server</span>
-            <span class="text-sm font-medium">
-              {status.name} v{status.version}
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center gap-2">
+              <div class="h-2 w-2 rounded-full bg-(--color-success)"></div>
+              <span
+                class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
+              >
+                Server
+              </span>
+            </div>
+            <span class="text-2xl font-bold tracking-tight">
+              {status.name}
+              <span class="text-sm font-normal text-(--color-text-muted)">
+                v{status.version}
+              </span>
             </span>
           </div>
         </Card>
@@ -115,9 +125,13 @@
 
       <Bento.Item deskCols="3">
         <Card padding="lg" class="h-full">
-          <div class="flex flex-col gap-1">
-            <span class="text-xs text-(--color-text-muted)">Uptime</span>
-            <span class="text-sm font-medium">
+          <div class="flex flex-col gap-1.5">
+            <span
+              class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
+            >
+              Uptime
+            </span>
+            <span class="text-2xl font-bold tracking-tight">
               {formatUptime(status.stats.uptimeSeconds)}
             </span>
           </div>
@@ -126,9 +140,13 @@
 
       <Bento.Item deskCols="3">
         <Card padding="lg" class="h-full">
-          <div class="flex flex-col gap-1">
-            <span class="text-xs text-(--color-text-muted)">Started At</span>
-            <span class="text-sm font-medium">
+          <div class="flex flex-col gap-1.5">
+            <span
+              class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
+            >
+              Started At
+            </span>
+            <span class="text-lg font-bold tracking-tight">
               {formatDate(status.stats.startedAt)}
             </span>
           </div>
@@ -137,11 +155,13 @@
 
       <Bento.Item deskCols="3">
         <Card padding="lg" class="h-full">
-          <div class="flex flex-col gap-1">
-            <span class="text-xs text-(--color-text-muted)">
-              Total HTTP Reqs
+          <div class="flex flex-col gap-1.5">
+            <span
+              class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
+            >
+              Total HTTP Requests
             </span>
-            <span class="text-sm font-medium">
+            <span class="text-2xl font-bold tracking-tight">
               {status.stats.totals.httpRequests.toLocaleString()}
             </span>
           </div>
@@ -149,89 +169,146 @@
       </Bento.Item>
 
       <Bento.Item deskCols="6" deskRows="2">
-        <Card padding="lg" class="h-full">
-          <h3 class="mb-3 text-sm font-semibold">Totals</h3>
-          <div class="flex flex-wrap gap-3">
-            <div class="flex items-center gap-2">
-              <Badge color="info" size="sm">Reads</Badge>
-              <span class="text-sm font-mono">
+        <Card padding="lg" class="h-full flex flex-col">
+          <div class="mb-4 flex items-center justify-between">
+            <h3
+              class="text-sm font-bold uppercase tracking-wider text-(--color-text)"
+            >
+              Total Operations
+            </h3>
+            <Badge variant="soft" color="neutral" size="sm">Cumulative</Badge>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <Card
+              bg="100"
+              padding="sm"
+              class="flex flex-col gap-1 border border-base-400"
+            >
+              <span class="text-xs text-(--color-text-muted)">Reads</span>
+              <span class="text-lg font-mono font-semibold">
                 {status.stats.totals.reads.toLocaleString()}
               </span>
-            </div>
-            <div class="flex items-center gap-2">
-              <Badge color="warning" size="sm">Writes</Badge>
-              <span class="text-sm font-mono">
+            </Card>
+            <Card
+              bg="100"
+              padding="sm"
+              class="flex flex-col gap-1 border border-base-400"
+            >
+              <span class="text-xs text-(--color-text-muted)">Writes</span>
+              <span class="text-lg font-mono font-semibold">
                 {status.stats.totals.writes.toLocaleString()}
               </span>
-            </div>
-            <div class="flex items-center gap-2">
-              <Badge color="neutral" size="sm">Begins</Badge>
-              <span class="text-sm font-mono">
+            </Card>
+            <Card
+              bg="100"
+              padding="sm"
+              class="flex flex-col gap-1 border border-base-400"
+            >
+              <span class="text-xs text-(--color-text-muted)">Begins</span>
+              <span class="text-lg font-mono font-semibold">
                 {status.stats.totals.begins.toLocaleString()}
               </span>
-            </div>
-            <div class="flex items-center gap-2">
-              <Badge color="success" size="sm">Commits</Badge>
-              <span class="text-sm font-mono">
+            </Card>
+            <Card
+              bg="100"
+              padding="sm"
+              class="flex flex-col gap-1 border border-base-400"
+            >
+              <span class="text-xs text-(--color-text-muted)">Commits</span>
+              <span
+                class="text-lg font-mono font-semibold text-(--color-success)"
+              >
                 {status.stats.totals.commits.toLocaleString()}
               </span>
-            </div>
-            <div class="flex items-center gap-2">
-              <Badge color="warning" size="sm">Rollbacks</Badge>
-              <span class="text-sm font-mono">
+            </Card>
+            <Card
+              bg="100"
+              padding="sm"
+              class="flex flex-col gap-1 border border-base-400"
+            >
+              <span class="text-xs text-(--color-text-muted)">Rollbacks</span>
+              <span
+                class="text-lg font-mono font-semibold text-(--color-warning)"
+              >
                 {status.stats.totals.rollbacks.toLocaleString()}
               </span>
-            </div>
-            <div class="flex items-center gap-2">
-              <Badge color="error" size="sm">Errors</Badge>
-              <span class="text-sm font-mono">
+            </Card>
+            <Card
+              bg="100"
+              padding="sm"
+              class="flex flex-col gap-1 border border-base-400"
+            >
+              <span class="text-xs text-(--color-text-muted)">Errors</span>
+              <span
+                class="text-lg font-mono font-semibold text-(--color-error)"
+              >
                 {status.stats.totals.errors.toLocaleString()}
               </span>
-            </div>
-            <div class="flex items-center gap-2">
-              <Badge color="info" size="sm">HTTP Reqs</Badge>
-              <span class="text-sm font-mono">
-                {status.stats.totals.httpRequests.toLocaleString()}
-              </span>
-            </div>
+            </Card>
           </div>
         </Card>
       </Bento.Item>
 
       <Bento.Item deskCols="6" deskRows="2">
-        <Card padding="lg" class="h-full">
-          <h3 class="mb-3 text-sm font-semibold">Queued</h3>
-          <div class="flex flex-wrap gap-3">
-            <div class="flex items-center gap-2">
-              <Badge color="neutral" size="sm">Begins</Badge>
-              <span class="text-sm font-mono">
+        <Card padding="lg" class="h-full flex flex-col">
+          <div class="mb-4 flex items-center justify-between">
+            <h3
+              class="text-sm font-bold uppercase tracking-wider text-(--color-text)"
+            >
+              Queued Operations
+            </h3>
+            <Badge variant="soft" color="warning" size="sm">In-flight</Badge>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <Card
+              bg="100"
+              padding="sm"
+              class="flex flex-col gap-1 border border-base-400"
+            >
+              <span class="text-xs text-(--color-text-muted)">Begins</span>
+              <span class="text-lg font-mono font-semibold">
                 {status.stats.queued.begins.toLocaleString()}
               </span>
-            </div>
-            <div class="flex items-center gap-2">
-              <Badge color="warning" size="sm">Writes</Badge>
-              <span class="text-sm font-mono">
+            </Card>
+            <Card
+              bg="100"
+              padding="sm"
+              class="flex flex-col gap-1 border border-base-400"
+            >
+              <span class="text-xs text-(--color-text-muted)">Writes</span>
+              <span class="text-lg font-mono font-semibold">
                 {status.stats.queued.writes.toLocaleString()}
               </span>
-            </div>
-            <div class="flex items-center gap-2">
-              <Badge color="info" size="sm">HTTP Reqs</Badge>
-              <span class="text-sm font-mono">
+            </Card>
+            <Card
+              bg="100"
+              padding="sm"
+              class="flex flex-col gap-1 border border-base-400"
+            >
+              <span class="text-xs text-(--color-text-muted)">HTTP Reqs</span>
+              <span class="text-lg font-mono font-semibold text-(--color-info)">
                 {status.stats.queued.httpRequests.toLocaleString()}
               </span>
-            </div>
+            </Card>
           </div>
         </Card>
       </Bento.Item>
 
       <Bento.Item deskCols="12">
         <Card padding="none" class="h-full overflow-hidden">
-          <div class="p-4 border-b border-base-400">
-            <h3 class="text-sm font-semibold">
-              Recent Activity (Last 10 minutes)
+          <div
+            class="p-4 border-b border-base-400 flex items-center justify-between bg-base-100"
+          >
+            <h3 class="text-sm font-bold uppercase tracking-wider">
+              Recent Activity
             </h3>
+            <Badge variant="outline" color="neutral" size="sm">
+              Last 10 minutes
+            </Badge>
           </div>
-          <div class="overflow-x-auto">
+          <div class="overflow-x-auto p-1">
             <Table.Root variant="ghost">
               <Table.Header>
                 <Table.Row>
