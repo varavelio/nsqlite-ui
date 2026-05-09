@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Alert, Badge, Card } from "@varavel/ui";
+  import { Alert, Badge, Card, Skeleton } from "@varavel/ui";
   import { onMount } from "svelte";
   import type { SystemStatusOutput } from "$lib/client/types";
   import { store } from "$lib/store.svelte";
@@ -45,16 +45,43 @@
   }
 </script>
 
-<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-5">
   {#if error}
     <Alert color="error">{error}</Alert>
   {/if}
 
   {#if loading && !status}
-    <p class="text-sm text-(--color-text-muted)">Loading status...</p>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {#each { length: 4 } as _, i (i)}
+        <Card padding="lg">
+          <div class="flex flex-col gap-2">
+            <Skeleton class="h-3 w-16" />
+            <Skeleton class="h-5 w-32" />
+          </div>
+        </Card>
+      {/each}
+    </div>
+    <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <Card padding="lg">
+        <Skeleton class="mb-3 h-4 w-20" />
+        <div class="flex flex-wrap gap-3">
+          {#each { length: 6 } as _, i (i)}
+            <Skeleton class="h-6 w-24" />
+          {/each}
+        </div>
+      </Card>
+      <Card padding="lg">
+        <Skeleton class="mb-3 h-4 w-20" />
+        <div class="flex flex-wrap gap-3">
+          {#each { length: 3 } as _, i (i)}
+            <Skeleton class="h-6 w-24" />
+          {/each}
+        </div>
+      </Card>
+    </div>
   {:else if status}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card class="p-4">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <Card padding="lg">
         <div class="flex flex-col gap-1">
           <span class="text-xs text-(--color-text-muted)">Server</span>
           <span class="text-sm font-medium">
@@ -63,7 +90,7 @@
         </div>
       </Card>
 
-      <Card class="p-4">
+      <Card padding="lg">
         <div class="flex flex-col gap-1">
           <span class="text-xs text-(--color-text-muted)">Uptime</span>
           <span class="text-sm font-medium">
@@ -72,7 +99,7 @@
         </div>
       </Card>
 
-      <Card class="p-4">
+      <Card padding="lg">
         <div class="flex flex-col gap-1">
           <span class="text-xs text-(--color-text-muted)">Started At</span>
           <span class="text-sm font-medium">
@@ -81,7 +108,7 @@
         </div>
       </Card>
 
-      <Card class="p-4">
+      <Card padding="lg">
         <div class="flex flex-col gap-1">
           <span class="text-xs text-(--color-text-muted)">Total HTTP Reqs</span>
           <span class="text-sm font-medium">
@@ -91,76 +118,78 @@
       </Card>
     </div>
 
-    <Card class="p-4">
-      <h3 class="text-sm font-semibold mb-3">Totals</h3>
-      <div class="flex flex-wrap gap-3">
-        <div class="flex items-center gap-2">
-          <Badge color="info" size="sm">Reads</Badge>
-          <span class="text-sm font-mono">
-            {status.stats.totals.reads.toLocaleString()}
-          </span>
+    <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <Card padding="lg">
+        <h3 class="mb-3 text-sm font-semibold">Totals</h3>
+        <div class="flex flex-wrap gap-3">
+          <div class="flex items-center gap-2">
+            <Badge color="info" size="sm">Reads</Badge>
+            <span class="text-sm font-mono">
+              {status.stats.totals.reads.toLocaleString()}
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <Badge color="warning" size="sm">Writes</Badge>
+            <span class="text-sm font-mono">
+              {status.stats.totals.writes.toLocaleString()}
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <Badge color="neutral" size="sm">Begins</Badge>
+            <span class="text-sm font-mono">
+              {status.stats.totals.begins.toLocaleString()}
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <Badge color="success" size="sm">Commits</Badge>
+            <span class="text-sm font-mono">
+              {status.stats.totals.commits.toLocaleString()}
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <Badge color="warning" size="sm">Rollbacks</Badge>
+            <span class="text-sm font-mono">
+              {status.stats.totals.rollbacks.toLocaleString()}
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <Badge color="error" size="sm">Errors</Badge>
+            <span class="text-sm font-mono">
+              {status.stats.totals.errors.toLocaleString()}
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <Badge color="info" size="sm">HTTP Reqs</Badge>
+            <span class="text-sm font-mono">
+              {status.stats.totals.httpRequests.toLocaleString()}
+            </span>
+          </div>
         </div>
-        <div class="flex items-center gap-2">
-          <Badge color="warning" size="sm">Writes</Badge>
-          <span class="text-sm font-mono">
-            {status.stats.totals.writes.toLocaleString()}
-          </span>
-        </div>
-        <div class="flex items-center gap-2">
-          <Badge color="neutral" size="sm">Begins</Badge>
-          <span class="text-sm font-mono">
-            {status.stats.totals.begins.toLocaleString()}
-          </span>
-        </div>
-        <div class="flex items-center gap-2">
-          <Badge color="success" size="sm">Commits</Badge>
-          <span class="text-sm font-mono">
-            {status.stats.totals.commits.toLocaleString()}
-          </span>
-        </div>
-        <div class="flex items-center gap-2">
-          <Badge color="warning" size="sm">Rollbacks</Badge>
-          <span class="text-sm font-mono">
-            {status.stats.totals.rollbacks.toLocaleString()}
-          </span>
-        </div>
-        <div class="flex items-center gap-2">
-          <Badge color="error" size="sm">Errors</Badge>
-          <span class="text-sm font-mono">
-            {status.stats.totals.errors.toLocaleString()}
-          </span>
-        </div>
-        <div class="flex items-center gap-2">
-          <Badge color="info" size="sm">HTTP Reqs</Badge>
-          <span class="text-sm font-mono">
-            {status.stats.totals.httpRequests.toLocaleString()}
-          </span>
-        </div>
-      </div>
-    </Card>
+      </Card>
 
-    <Card class="p-4">
-      <h3 class="text-sm font-semibold mb-3">Queued</h3>
-      <div class="flex flex-wrap gap-3">
-        <div class="flex items-center gap-2">
-          <Badge color="neutral" size="sm">Begins</Badge>
-          <span class="text-sm font-mono">
-            {status.stats.queued.begins.toLocaleString()}
-          </span>
+      <Card padding="lg">
+        <h3 class="mb-3 text-sm font-semibold">Queued</h3>
+        <div class="flex flex-wrap gap-3">
+          <div class="flex items-center gap-2">
+            <Badge color="neutral" size="sm">Begins</Badge>
+            <span class="text-sm font-mono">
+              {status.stats.queued.begins.toLocaleString()}
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <Badge color="warning" size="sm">Writes</Badge>
+            <span class="text-sm font-mono">
+              {status.stats.queued.writes.toLocaleString()}
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <Badge color="info" size="sm">HTTP Reqs</Badge>
+            <span class="text-sm font-mono">
+              {status.stats.queued.httpRequests.toLocaleString()}
+            </span>
+          </div>
         </div>
-        <div class="flex items-center gap-2">
-          <Badge color="warning" size="sm">Writes</Badge>
-          <span class="text-sm font-mono">
-            {status.stats.queued.writes.toLocaleString()}
-          </span>
-        </div>
-        <div class="flex items-center gap-2">
-          <Badge color="info" size="sm">HTTP Reqs</Badge>
-          <span class="text-sm font-mono">
-            {status.stats.queued.httpRequests.toLocaleString()}
-          </span>
-        </div>
-      </div>
-    </Card>
+      </Card>
+    </div>
   {/if}
 </div>

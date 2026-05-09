@@ -1,23 +1,22 @@
-<script lang="ts">
-  import { Tabs } from "@varavel/ui";
-  import SqlQuery from "./SqlQuery.svelte";
-  import SystemStatus from "./SystemStatus.svelte";
+<svelte:head>
+  <title>Dashboard | NSQLite UI</title>
+</svelte:head>
 
-  let activeTab = $state("status");
-  let tabs = $state([
-    { value: "status", label: "System Status", content: statusSnippet },
-    { value: "query", label: "SQL Query", content: querySnippet },
-  ]);
+<script lang="ts">
+  import { Container, Heading } from "@varavel/ui";
+  import SystemStatus from "./SystemStatus.svelte";
 </script>
 
-{#snippet statusSnippet()}
-  <SystemStatus />
-{/snippet}
+<Container maxWidth="full" padded>
+  <div class="flex flex-col gap-6">
+    <div>
+      <Heading level="2" size="lg">System dashboard</Heading>
+      <p class="mt-1 text-sm text-(--color-text-muted)">
+        Monitor runtime health, request volume, and queue activity for the
+        connected NSQLite server.
+      </p>
+    </div>
 
-{#snippet querySnippet()}
-  <SqlQuery />
-{/snippet}
-
-<div class="p-4">
-  <Tabs bind:value={activeTab} items={tabs} color="info" />
-</div>
+    <SystemStatus />
+  </div>
+</Container>

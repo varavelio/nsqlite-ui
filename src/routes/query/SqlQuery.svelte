@@ -1,6 +1,16 @@
 <script lang="ts">
-  import { Alert, Badge, Button, Card, Table, Textarea } from "@varavel/ui";
-  import type { QueryResult, SqliteValue } from "$lib/client/types";
+  import {
+    Alert,
+    Badge,
+    Button,
+    Card,
+    Heading,
+    Label,
+    Table,
+    Textarea,
+  } from "@varavel/ui";
+  import type { QueryResult } from "$lib/client/types";
+  import { sqliteValueToDisplay } from "$lib/sqlite";
   import { store } from "$lib/store.svelte";
 
   let sql = $state("");
@@ -8,15 +18,6 @@
   let totalTime = $state(0);
   let error = $state("");
   let running = $state(false);
-
-  function sqliteValueToDisplay(v: SqliteValue): string {
-    if (v.null === true) return "NULL";
-    if (v.integer !== undefined) return String(v.integer);
-    if (v.real !== undefined) return String(v.real);
-    if (v.text !== undefined) return v.text;
-    if (v.blob !== undefined) return `[BLOB: ${v.blob.length} chars]`;
-    return "";
-  }
 
   async function execute() {
     if (!store.client || !sql.trim()) return;
@@ -58,17 +59,25 @@
   }
 </script>
 
-<div class="flex flex-col gap-4">
-  <Card class="p-4">
+<div class="flex flex-col gap-5">
+  <Card padding="lg">
     <div class="flex flex-col gap-3">
-      <label for="sql-editor" class="text-sm font-medium">SQL Query</label>
+      <div>
+        <Heading level="2" size="md">Manual SQL query</Heading>
+        <p class="mt-1 text-sm text-(--color-text-muted)">
+          Run ad-hoc read or write statements directly against the connected
+          database.
+        </p>
+      </div>
+
+      <Label for="sql-editor">SQL Query</Label>
       <Textarea
         id="sql-editor"
         placeholder="SELECT * FROM sqlite_master;"
         bind:value={sql}
         rows={5}
       />
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-3">
         <Button
           color="info"
           size="md"
@@ -92,9 +101,9 @@
     <Alert color="error">{error}</Alert>
   {/if}
 
-  {#each results as result}
-    <Card class="p-4">
-      <div class="flex items-center gap-2 mb-3">
+  {#each results as result, resultIndex (`${result.time}-${resultIndex}`)}
+    <Card padding="lg">
+      <div class="mb-3 flex items-center gap-2">
         <Badge color={resultBadgeColor(result.type)} size="sm">
           {result.type}
         </Badge>
@@ -128,15 +137,15 @@
           <Table.Root size="sm" striped stickyHeader>
             <Table.Header>
               <Table.Row>
-                {#each result.columns as col}
+                {#each result.columns as col (col)}
                   <Table.Head>{col}</Table.Head>
                 {/each}
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {#each result.rows as row}
+              {#each result.rows as row, rowIndex (`${result.time}-${rowIndex}`)}
                 <Table.Row>
-                  {#each row as cell}
+                  {#each row as cell, cellIndex (`${rowIndex}-${cellIndex}`)}
                     <Table.Cell>{sqliteValueToDisplay(cell)}</Table.Cell>
                   {/each}
                 </Table.Row>
