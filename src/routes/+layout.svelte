@@ -1,15 +1,18 @@
-<script>
+<script lang="ts">
   import "../app.css";
 
-  import { Button, ThemePicker, UiProvider } from "@varavel/ui";
+  import { Code, Database, LayoutDashboard, LogOut } from "@lucide/svelte";
+  import { Button, Nav, ThemePicker, UiProvider } from "@varavel/ui";
   import { Loader } from "@varavel/ui/brand";
   import { AppLayout } from "@varavel/ui/layouts";
+  import { page } from "$app/state";
   import { store } from "$lib/store.svelte";
   import AuthWall from "./AuthWall.svelte";
 
   let { children } = $props();
 
   let initialized = $derived(store.loaded);
+  let pathname = $derived(page.url.pathname);
 
   function handleLogout() {
     store.logout();
@@ -17,39 +20,64 @@
 </script>
 
 {#if !initialized}
-  <div class="w-dvw h-dvh overflow-hidden flex items-center justify-center">
+  <div class="flex h-dvh w-dvw items-center justify-center overflow-hidden">
     <Loader size="lg" />
   </div>
 {:else}
   <UiProvider>
     <AuthWall>
-      <AppLayout primaryRegion="header" maxWidth="md">
+      <AppLayout
+        primaryRegion="header"
+        maxWidth="xl"
+        sidebarWidth="md"
+        closeSidebarOnRouteChange={true}
+      >
         {#snippet headerLeft()}
-          <header class="hidden desk:flex ml-2 items-center gap-4">
+          <div class="flex items-center gap-3">
             <img
               src="https://cdn.jsdelivr.net/gh/varavelio/nsqlite@dbf7ff/assets/logo.svg"
               alt="NSQLite Logo"
-              class="h-6 mx-auto"
+              class="h-6"
             >
-          </header>
-        {/snippet}
-
-        {#snippet headerCenter()}
-          <header class="w-full desk:hidden"></header>
+            <span class="text-2xl font-semibold font-mono italic">UI</span>
+          </div>
         {/snippet}
 
         {#snippet headerRight()}
-          <ThemePicker variant="ghost" />
-          {#if store.client}
+          <div class="flex items-center gap-2">
+            <ThemePicker variant="ghost" />
             <Button
               variant="ghost"
-              size="sm"
               color="neutral"
+              icon={LogOut}
               onclick={handleLogout}
             >
               Logout
             </Button>
-          {/if}
+          </div>
+        {/snippet}
+
+        {#snippet sidebarCenter()}
+          <Nav.Root>
+            <Nav.Item
+              href="/"
+              label="Dashboard"
+              icon={LayoutDashboard}
+              active={pathname === "/"}
+            />
+            <Nav.Item
+              href="/query"
+              label="Query"
+              icon={Code}
+              active={pathname === "/query"}
+            />
+            <Nav.Item
+              href="/explorer"
+              label="Explorer"
+              icon={Database}
+              active={pathname === "/explorer"}
+            />
+          </Nav.Root>
         {/snippet}
 
         {#snippet main()}
