@@ -45,3 +45,26 @@ After completing the code, ask the user if they want a playground link. Only cal
 - Before building any UI element, check if `@varavel/ui` already provides a component for it. You can explore available components by listing the directory at `node_modules/@varavel/ui`.
 - Only fall back to custom TailwindCSS when `@varavel/ui` does not provide the needed component and building from primitives would be unreasonable.
 - Always import from `@varavel/ui` using its public API (check the package's `package.json` `exports` field or `src/index.ts` for available exports).
+
+## UI/UX Design Guidelines
+
+You MUST adhere to the following design language principles to create beautiful, modern, Vercel-style dashboard interfaces:
+
+### Typography & Hierarchy
+
+- You MUST use uppercase, small, semi-bold text with wide tracking for labels and headers (e.g., `text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)`).
+- You MUST use large, bold text with tight tracking for primary metrics and values (e.g., `text-2xl font-bold tracking-tight`).
+
+### Data Grouping & Metrics
+
+- NEVER use floating badges to display primary metrics.
+- ALWAYS use nested cards within a grid for structured, scannable data (e.g., a parent `Card` containing a `grid gap-3` of child `<Card bg="100" padding="sm" class="border border-base-400">`).
+
+### Contextual Badges
+
+- ALWAYS use `Badge` components ONLY for contextual meta-information (like "Cumulative", "In-flight", "Last 10 minutes") next to headers.
+- ALWAYS prefer subtle variants like `variant="soft"` or `variant="outline"`.
+
+### Semantic Coloring
+
+- ALWAYS apply semantic text colors to emphasize specific metric values (e.g., `text-success` for positive actions like commits, `text-error` for errors).
