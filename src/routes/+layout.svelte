@@ -1,7 +1,7 @@
 <script>
   import "../app.css";
 
-  import { Button, UiProvider } from "@varavel/ui";
+  import { Button, ThemePicker, UiProvider } from "@varavel/ui";
   import { Loader } from "@varavel/ui/brand";
   import { AppLayout } from "@varavel/ui/layouts";
   import { store } from "$lib/store.svelte";
@@ -39,6 +39,7 @@
         {/snippet}
 
         {#snippet headerRight()}
+          <ThemePicker variant="ghost" />
           {#if store.client}
             <Button
               variant="ghost"
