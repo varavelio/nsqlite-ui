@@ -20,6 +20,7 @@
     quoteSqliteIdentifier,
     readResultRowsToObjects,
     sqliteValueToDisplay,
+    sqliteValueToPrimitive,
   } from "$lib/sqlite";
   import { store } from "$lib/store.svelte";
 
@@ -63,7 +64,8 @@
   $effect(() => {
     if (initialTable !== selectedObjectName) {
       selectedObjectName = initialTable;
-      currentPage = 1;
+      pageIndex = 0;
+      cursorHistory = [{}];
       if (store.client && initialTable) {
         void loadSelectedObject();
       }
@@ -81,16 +83,22 @@
   let totalTime = $state(0);
   let pageSize = $state(25);
   let selectPageSize = $state("25");
-  let currentPage = $state(1);
   let schemaRequestId = 0;
   let objectDefinition = $state<string | null>(null);
+
+  // Pagination state
+  let cursorHistory = $state<Record<string, SqlitePrimitive>[]>([{}]);
+  let pageIndex = $state(0);
+  let hasNextPage = $state(false);
+  let countingRows = $state(false);
 
   $effect(() => {
     if (selectPageSize !== String(pageSize)) {
       const nextValue = Number(selectPageSize);
       if (Number.isFinite(nextValue) && nextValue > 0) {
         pageSize = nextValue;
-        currentPage = 1;
+        cursorHistory = [{}];
+        pageIndex = 0;
         void loadSelectedObject();
       }
     }
@@ -103,25 +111,32 @@
       .map((column) => column.name),
   );
 
-  let totalPages = $derived.by(() => {
-    if (totalRows === null) return 1;
-    return Math.max(1, Math.ceil(totalRows / pageSize));
-  });
-
   let showingFrom = $derived(
-    totalRows === null || totalRows === 0
-      ? 0
-      : (currentPage - 1) * pageSize + 1,
+    previewRows.length === 0 ? 0 : pageIndex * pageSize + 1,
   );
-  let showingTo = $derived(
-    totalRows === null || totalRows === 0
-      ? 0
-      : Math.min(totalRows, (currentPage - 1) * pageSize + previewRows.length),
-  );
+  let showingTo = $derived(pageIndex * pageSize + previewRows.length);
 
   let previewSummary = $derived(
-    `Showing ${showingFrom}-${showingTo} of ${totalRows?.toLocaleString() ?? "-"} rows.`,
+    previewRows.length === 0
+      ? "No data to display."
+      : `Showing ${showingFrom}-${showingTo}${totalRows !== null ? ` of ${totalRows.toLocaleString()}` : ""}.`,
   );
+
+  async function countTotalRows() {
+    if (!store.client || !selectedObjectName) return;
+    countingRows = true;
+    try {
+      const safeName = quoteSqliteIdentifier(selectedObjectName);
+      const [countResult] = await runQueries([
+        `SELECT COUNT(*) AS total_rows FROM ${safeName};`,
+      ]);
+      totalRows = parseCount(countResult);
+    } catch (e) {
+      console.error("Failed to count rows", e);
+    } finally {
+      countingRows = false;
+    }
+  }
 
   async function runQueries(queries: string[]): Promise<QueryResult[]> {
     if (!store.client) {
@@ -205,20 +220,14 @@
         `PRAGMA table_info(${pragmaName});`,
         `PRAGMA index_list(${pragmaName});`,
         `PRAGMA foreign_key_list(${pragmaName});`,
-        `SELECT COUNT(*) AS total_rows FROM ${safeName};`,
         `SELECT sql FROM sqlite_master WHERE name = ${pragmaName};`,
       ]);
       const metadataTime = totalTime;
 
       if (requestId !== schemaRequestId) return;
 
-      const [
-        columnsResult,
-        indexesResult,
-        foreignKeysResult,
-        countResult,
-        sqlResult,
-      ] = metadataResults;
+      const [columnsResult, indexesResult, foreignKeysResult, sqlResult] =
+        metadataResults;
 
       const metadataError = metadataResults.find(
         (result) => result?.error,
@@ -239,8 +248,8 @@
         objectName: selectedObjectName,
         columnNames: nextColumns.map((column) => column.name),
         primaryKeyColumns: nextPrimaryKeyColumns,
-        limit: pageSize,
-        offset: (currentPage - 1) * pageSize,
+        limit: pageSize + 1, // Request limit + 1 to check for next page
+        cursor: cursorHistory[pageIndex],
       });
 
       const [previewResult] = await runQueries([previewQuery]);
@@ -252,13 +261,18 @@
         throw new Error(previewResult.error);
       }
 
+      const returnedRows = previewResult?.rows ?? [];
+      hasNextPage = returnedRows.length > pageSize;
+      const displayRows = hasNextPage
+        ? returnedRows.slice(0, pageSize)
+        : returnedRows;
+
       columns = nextColumns;
       indexes = nextIndexes;
       foreignKeys = nextForeignKeys;
-      totalRows = parseCount(countResult);
       objectDefinition = parseSql(sqlResult);
       previewColumns = previewResult?.columns ?? [];
-      previewRows = previewResult?.rows ?? [];
+      previewRows = displayRows;
       totalTime = metadataTime + previewTime;
     } catch (error) {
       if (requestId !== schemaRequestId) return;
@@ -278,9 +292,37 @@
     }
   }
 
-  function handlePageChange(pageNumber: number) {
-    currentPage = pageNumber;
+  function handleNextPage() {
+    if (!hasNextPage || previewRows.length === 0) return;
+
+    // Extract cursor from the last row
+    const lastRow = previewRows[previewRows.length - 1];
+    const newCursor: Record<string, SqlitePrimitive> = {};
+    const orderCols =
+      primaryKeyColumns.length > 0
+        ? primaryKeyColumns
+        : previewColumns.slice(0, 1);
+
+    for (const col of orderCols) {
+      const colIdx = previewColumns.indexOf(col);
+      if (colIdx >= 0) {
+        newCursor[col] = sqliteValueToPrimitive(
+          lastRow[colIdx] ?? { null: true },
+        );
+      }
+    }
+
+    cursorHistory.push(newCursor);
+    pageIndex++;
     void loadSelectedObject();
+  }
+
+  function handlePrevPage() {
+    if (pageIndex > 0) {
+      cursorHistory.pop();
+      pageIndex--;
+      void loadSelectedObject();
+    }
   }
 
   onMount(() => {
@@ -329,9 +371,22 @@
                 >
                   Total Rows
                 </span>
-                <span class="text-lg font-mono font-semibold">
-                  {totalRows?.toLocaleString() ?? "—"}
-                </span>
+                <div class="flex items-center gap-2">
+                  <span class="text-lg font-mono font-semibold">
+                    {totalRows?.toLocaleString() ?? "—"}
+                  </span>
+                  {#if totalRows === null}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      class="h-6 px-2 text-xs"
+                      loading={countingRows}
+                      onclick={countTotalRows}
+                    >
+                      Count
+                    </Button>
+                  {/if}
+                </div>
               </Card>
               <Card
                 bg="100"
@@ -626,17 +681,29 @@
             </Table.Root>
           </div>
 
-          {#if totalRows !== null && totalRows > 0}
+          {#if pageIndex > 0 || hasNextPage}
             <div
-              class="border-t border-base-400 bg-base-100 p-4 flex justify-center"
+              class="border-t border-base-400 bg-base-100 p-4 flex items-center justify-between"
             >
-              <Pagination
-                count={totalRows}
-                page={currentPage}
-                perPage={pageSize}
-                onPageChange={handlePageChange}
-                showSummary={false}
-              />
+              <p class="text-xs text-(--color-text-muted)">{previewSummary}</p>
+              <div class="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={pageIndex === 0}
+                  onclick={handlePrevPage}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!hasNextPage}
+                  onclick={handleNextPage}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           {/if}
         </Card>

@@ -29,24 +29,46 @@ function buildExplorerPreviewQuery({
   columnNames,
   primaryKeyColumns,
   limit,
-  offset,
+  cursor,
 }: {
   objectName: string;
   columnNames: string[];
   primaryKeyColumns: string[];
   limit: number;
-  offset: number;
+  cursor?: Record<string, SqlitePrimitive>;
 }): string {
   const safeLimit = Math.max(1, Math.min(200, Math.floor(limit || 25)));
-  const safeOffset = Math.max(0, Math.floor(offset || 0));
+
+  // If no PKs are defined, fallback to the first column
   const orderColumns =
     primaryKeyColumns.length > 0 ? primaryKeyColumns : columnNames.slice(0, 1);
-  const orderByClause =
-    orderColumns.length > 0
-      ? ` ORDER BY ${orderColumns.map(quoteSqliteIdentifier).join(", ")}`
-      : "";
 
-  return `SELECT * FROM ${quoteSqliteIdentifier(objectName)}${orderByClause} LIMIT ${safeLimit} OFFSET ${safeOffset};`;
+  const orderByClause = ` ORDER BY ${orderColumns.map(quoteSqliteIdentifier).join(", ")}`;
+
+  let whereClause = "";
+  if (cursor && Object.keys(cursor).length > 0 && orderColumns.length > 0) {
+    const cursorKeys = orderColumns.filter((c) => cursor[c] !== undefined);
+    if (cursorKeys.length > 0) {
+      // For composite keys, SQLite supports row values: (A, B) > (valA, valB)
+      const keysStr = cursorKeys.map(quoteSqliteIdentifier).join(", ");
+      const valsStr = cursorKeys
+        .map((k) => {
+          const val = cursor[k];
+          if (val === null) return "NULL";
+          if (typeof val === "string") return `'${val.replace(/'/g, "''")}'`;
+          return val;
+        })
+        .join(", ");
+
+      if (cursorKeys.length === 1) {
+        whereClause = ` WHERE ${keysStr} > ${valsStr}`;
+      } else {
+        whereClause = ` WHERE (${keysStr}) > (${valsStr})`;
+      }
+    }
+  }
+
+  return `SELECT * FROM ${quoteSqliteIdentifier(objectName)}${whereClause}${orderByClause} LIMIT ${safeLimit};`;
 }
 
 function readResultRowsToObjects(
