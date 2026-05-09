@@ -29,7 +29,7 @@
       <AppLayout
         primaryRegion="header"
         maxWidth="xl"
-        sidebarWidth="md"
+        sidebarWidth="sm"
         closeSidebarOnRouteChange={true}
       >
         {#snippet headerLeft()}
