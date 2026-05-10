@@ -33,35 +33,6 @@
 </script>
 
 <Card padding="none" class="overflow-hidden">
-  <div
-    class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-base-400 bg-base-100 p-4"
-  >
-    <div class="flex flex-col gap-1">
-      <h3
-        class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
-      >
-        Preview Data
-      </h3>
-      <p class="text-xs text-(--color-text-muted)">
-        {previewSummary}
-      </p>
-    </div>
-
-    <div class="flex items-center gap-3">
-      <span
-        class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
-      >
-        Page size
-      </span>
-      <Select
-        items={pageSizeItems}
-        bind:value={selectPageSize}
-        size="sm"
-        class="w-24"
-      />
-    </div>
-  </div>
-
   <div class="overflow-x-auto p-1">
     <Table.Root size="sm" striped stickyHeader variant="ghost">
       <Table.Header>
@@ -107,7 +78,7 @@
 
   {#if previewColumns.length > 0}
     <div
-      class="border-t border-base-400 bg-base-100 p-4 flex items-center justify-between"
+      class="border-t border-base-400 bg-base-100 p-4 flex flex-wrap items-center justify-between gap-4"
     >
       <div class="flex items-center gap-2">
         <p class="text-xs text-(--color-text-muted)">
@@ -123,26 +94,42 @@
           {totalRows === null ? "Count" : "Recount"}
         </Button>
       </div>
-      {#if pageIndex > 0 || hasNextPage}
+
+      <div class="flex flex-wrap items-center gap-4">
         <div class="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={pageIndex === 0}
-            onclick={handlePrevPage}
+          <span
+            class="text-xs font-semibold uppercase tracking-wider text-(--color-text-muted)"
           >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
+            Page size
+          </span>
+          <Select
+            items={pageSizeItems}
+            bind:value={selectPageSize}
             size="sm"
-            disabled={!hasNextPage}
-            onclick={handleNextPage}
-          >
-            Next
-          </Button>
+            class="w-24"
+          />
         </div>
-      {/if}
+        {#if pageIndex > 0 || hasNextPage}
+          <div class="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={pageIndex === 0}
+              onclick={handlePrevPage}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!hasNextPage}
+              onclick={handleNextPage}
+            >
+              Next
+            </Button>
+          </div>
+        {/if}
+      </div>
     </div>
   {/if}
 </Card>
