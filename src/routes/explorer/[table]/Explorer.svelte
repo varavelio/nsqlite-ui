@@ -67,6 +67,7 @@
       selectedObjectName = initialTable;
       pageIndex = 0;
       cursorHistory = [{}];
+      totalRows = null;
       if (store.client && initialTable) {
         void loadSelectedObject();
       }
@@ -626,17 +627,15 @@
                 <p class="text-xs text-(--color-text-muted)">
                   {previewSummary}
                 </p>
-                {#if totalRows === null}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    class="h-6 px-2 text-xs"
-                    loading={countingRows}
-                    onclick={countTotalRows}
-                  >
-                    Count
-                  </Button>
-                {/if}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  class="h-6 px-2 text-xs"
+                  loading={countingRows}
+                  onclick={countTotalRows}
+                >
+                  {totalRows === null ? "Count" : "Recount"}
+                </Button>
               </div>
               {#if pageIndex > 0 || hasNextPage}
                 <div class="flex items-center gap-2">
